@@ -1,8 +1,21 @@
 # WordPress.org Plugin Compliance Checker
 
-**A comprehensive pre-submission validation tool for WordPress plugins targeting the official WordPress.org plugin directory.**
+**A comprehensive toolkit for WordPress plugins targeting the official WordPress.org plugin directory — from pre-submission validation through approval to going live via SVN.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+---
+
+## What This Covers
+
+This tool guides you through the **entire WordPress.org plugin lifecycle**:
+
+| Phase | Documentation |
+|-------|---------------|
+| **Pre-Submission** | Code requirements, security checks, file structure, readme.txt validation |
+| **Submission** | Plugin Check tool, common rejection reasons, fix examples |
+| **Post-Approval** | SVN setup, first upload, creating assets (banners/icons), tagging releases |
+| **Maintenance** | Releasing updates, security patches, "Tested up to" updates |
 
 ---
 
@@ -136,6 +149,58 @@ See `docs/08-common-rejections.md` for grep commands you can run manually.
 | 3 | Missing output escaping | `esc_html()`, `esc_attr()`, `esc_url()` |
 | 4 | Missing nonce verification | `wp_nonce_field()` + `wp_verify_nonce()` |
 | 5 | Generic function names | Use 4+ character unique prefix (`myplugin_`) |
+
+---
+
+## Quick Reference: Going Live After Approval
+
+After your plugin is approved, you'll receive two emails:
+1. **Review Complete** — General SVN instructions
+2. **Approval Email** — Your specific SVN URL and username
+
+### First-Time SVN Upload
+
+```bash
+# 1. Set SVN password at: https://profiles.wordpress.org/me/profile/edit/group/3/?screen=svn-password
+
+# 2. Checkout your empty repo
+svn co https://plugins.svn.wordpress.org/your-plugin-slug ~/your-plugin-svn
+cd ~/your-plugin-svn
+
+# 3. Copy plugin files to trunk (NOT zipped)
+cp -r /path/to/your-plugin/* trunk/
+
+# 4. Create assets folder and add images
+mkdir -p assets
+cp banner-772x250.png icon-128x128.png screenshot-1.png assets/
+
+# 5. Add files and set MIME types
+svn add trunk/* assets/*
+svn propset svn:mime-type image/png assets/*.png
+
+# 6. Commit and tag
+svn ci -m "Initial release v1.0.0"
+svn cp trunk tags/1.0.0
+svn ci -m "Tagging version 1.0.0"
+```
+
+### Required Assets
+
+| Asset | Size | Required |
+|-------|------|----------|
+| `banner-772x250.png` | 772×250px | Yes |
+| `banner-1544x500.png` | 1544×500px | Recommended (retina) |
+| `icon-128x128.png` | 128×128px | Yes |
+| `icon-256x256.png` | 256×256px | Recommended (retina) |
+| `screenshot-N.png` | Any | Match readme.txt |
+
+### Important Timing
+
+- **Plugin files:** May take up to 6 hours to appear
+- **Search results:** May take up to **72 hours** to update
+- **Asset images:** May take up to 24 hours to display
+
+See `docs/05-svn-workflow.md` and `docs/09-post-approval.md` for complete guides.
 
 ---
 

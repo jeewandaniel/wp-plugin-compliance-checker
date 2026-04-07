@@ -1,6 +1,6 @@
 ---
 name: wp-plugin-check
-description: Comprehensive WordPress.org plugin compliance checker. Validates PHP syntax, security (sanitization, escaping, nonces), inline styles/scripts, file structure, and readme.txt. Use before WP.org submission or when checking plugin compliance.
+description: Complete WordPress.org plugin toolkit — from pre-submission validation (security, escaping, nonces, file structure) through approval to going live via SVN. Covers the entire lifecycle including post-approval SVN upload, plugin assets, and release management.
 user-invocable: true
 disable-model-invocation: false
 allowed-tools: Bash Grep Glob Read
@@ -215,7 +215,15 @@ if (!defined('ABSPATH')) {
 ## Reference Documentation
 
 Full standards documentation available in the `docs/` directory:
-- [01-code-requirements.md](../../docs/01-code-requirements.md)
-- [02-file-structure.md](../../docs/02-file-structure.md)
-- [03-readme-txt.md](../../docs/03-readme-txt.md)
-- [08-common-rejections.md](../../docs/08-common-rejections.md)
+
+**Pre-Submission:**
+- [01-code-requirements.md](../../docs/01-code-requirements.md) — Security, sanitization, escaping
+- [02-file-structure.md](../../docs/02-file-structure.md) — Directory layout, forbidden files
+- [03-readme-txt.md](../../docs/03-readme-txt.md) — readme.txt formatting
+- [07-plugin-check-tool.md](../../docs/07-plugin-check-tool.md) — Official Plugin Check tool
+- [08-common-rejections.md](../../docs/08-common-rejections.md) — Top rejection reasons
+
+**Post-Approval:**
+- [04-plugin-assets.md](../../docs/04-plugin-assets.md) — Banners, icons, screenshots
+- [05-svn-workflow.md](../../docs/05-svn-workflow.md) — SVN commands and workflow
+- [09-post-approval.md](../../docs/09-post-approval.md) — Updates, maintenance, going live

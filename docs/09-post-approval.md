@@ -278,9 +278,29 @@ jobs:
 
 ---
 
+## Important Timing Notes
+
+| Action | Wait Time |
+|--------|-----------|
+| CDN cache update (plugin files) | Up to 6 hours |
+| **Search results update** | **Up to 72 hours** |
+| Asset images (banners/icons) | Up to 24 hours |
+
+> After your first upload, your plugin may not appear in WordPress.org search results for up to 72 hours due to the directory size.
+
+---
+
 ## Resources
 
+**Official WordPress.org Links:**
 - [Plugin Directory](https://wordpress.org/plugins/)
+- [Plugin Developer FAQ](https://developer.wordpress.org/plugins/wordpress-org/plugin-developer-faq/)
 - [Developer Blog](https://make.wordpress.org/plugins/)
 - [Plugin Review Process](https://developer.wordpress.org/plugins/wordpress-org/plugin-review-process/)
 - [Security Best Practices](https://developer.wordpress.org/apis/security/)
+- [Block-Specific Plugin Guidelines](https://developer.wordpress.org/plugins/wordpress-org/block-specific-plugin-guidelines/)
+
+**Tools:**
+- [Readme.txt Validator](https://wordpress.org/plugins/developers/readme-validator/)
+- [Plugin Check Tool](https://wordpress.org/plugins/plugin-check/)
+- [SVN Password Setup](https://make.wordpress.org/meta/handbook/tutorials-guides/svn-access/)
