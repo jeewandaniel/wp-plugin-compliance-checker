@@ -1,0 +1,19 @@
+{
+  "results": [
+    {
+      "check": "plugin_header_fields",
+      "severity": "error",
+      "message": "Missing Requires at least header.",
+      "file": "sample-plugin.php",
+      "line": 6,
+      "recommendation": "Add the required plugin header fields to the main plugin file."
+    },
+    {
+      "check": "late_escaping",
+      "severity": "warning",
+      "message": "Dynamic output should be escaped for HTML context.",
+      "file": "includes/admin-page.php",
+      "line": 42
+    }
+  ]
+}

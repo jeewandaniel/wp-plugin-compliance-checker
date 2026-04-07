@@ -1,0 +1,23 @@
+name: Validate Tooling
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate rule JSON
+        run: |
+          find rules -type f -name '*.json' -print0 | while IFS= read -r -d '' f; do
+            jq empty "$f"
+          done
+
+      - name: Run regression suites
+        run: |
+          bash bin/wp-plugin-compliance test

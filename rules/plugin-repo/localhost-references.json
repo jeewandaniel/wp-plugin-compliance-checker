@@ -1,0 +1,30 @@
+{
+  "id": "plugin_repo.localhost_references",
+  "title": "Localhost references",
+  "summary": "Development URLs such as localhost or 127.0.0.1 should not ship in a WordPress.org plugin release.",
+  "category": "plugin-repo",
+  "severity": "warning",
+  "origin": "official-plugin-check",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://github.com/WordPress/plugin-check/blob/trunk/docs/checks.md",
+    "https://developer.wordpress.org/plugins/wordpress-org/common-issues/"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "regex",
+    "pattern_mode": "extended-regex",
+    "file_globs": [
+      "*.php"
+    ],
+    "patterns": [
+      "localhost",
+      "127\\.0\\.0\\.1"
+    ]
+  },
+  "guidance": {
+    "why_it_matters": "Local development endpoints in shipped code often indicate an incomplete or unsafe release build.",
+    "fix": "Replace development URLs with production endpoints or configurable settings that are safe for release.",
+    "false_positive_risk": "Medium. Comments, docs, or examples may be intentional."
+  }
+}

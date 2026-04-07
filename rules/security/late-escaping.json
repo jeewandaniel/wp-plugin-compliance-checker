@@ -1,0 +1,35 @@
+{
+  "id": "security.late_escaping",
+  "title": "Output escaping",
+  "summary": "WordPress expects output to be escaped as late as possible using the function that matches the output context.",
+  "category": "security",
+  "severity": "error",
+  "origin": "official-plugin-check",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://developer.wordpress.org/apis/security/escaping/",
+    "https://github.com/WordPress/plugin-check/blob/trunk/docs/checks.md"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "regex",
+    "pattern_mode": "extended-regex",
+    "file_globs": [
+      "*.php"
+    ],
+    "patterns": [
+      "echo[[:space:]]+\\$"
+    ],
+    "notes": "Current shell coverage only catches a narrow echo pattern. Official Plugin Check should remain authoritative for deeper escaping analysis."
+  },
+  "guidance": {
+    "why_it_matters": "Unescaped output is a direct security and review concern because the correct escaping function depends on HTML, attribute, URL, JS, or textarea context.",
+    "fix": "Escape values at output time with functions like esc_html(), esc_attr(), esc_url(), esc_js(), or esc_textarea() based on context.",
+    "false_positive_risk": "High. Real output escaping analysis requires more than line-based pattern matching.",
+    "examples": [
+      "echo esc_html($value);",
+      "echo esc_attr($value);",
+      "echo esc_url($url);"
+    ]
+  }
+}

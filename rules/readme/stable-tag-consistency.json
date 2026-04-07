@@ -1,0 +1,32 @@
+{
+  "id": "plugin_repo.stable_tag_consistency",
+  "title": "Stable tag and version consistency",
+  "summary": "The plugin version and readme stable tag should stay aligned, and the stable tag should not be trunk.",
+  "category": "readme",
+  "severity": "error",
+  "origin": "official-handbook",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://developer.wordpress.org/plugins/wordpress-org/how-your-readme-txt-works/",
+    "https://github.com/WordPress/plugin-check/blob/trunk/docs/checks.md"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "metadata",
+    "metadata_check": "stable-tag-consistency",
+    "file_globs": [
+      "readme.txt",
+      "*.php"
+    ],
+    "notes": "The current shell script does a basic text comparison. The core engine should parse headers more reliably."
+  },
+  "guidance": {
+    "why_it_matters": "Version mismatches and trunk stable tags are common repository blockers and can confuse update behavior.",
+    "fix": "Set Stable tag in readme.txt to the released version number and keep it aligned with the main plugin header version.",
+    "false_positive_risk": "Low to medium. Detection quality depends on correctly identifying the main plugin file.",
+    "examples": [
+      "Stable tag: 1.0.0",
+      "Version: 1.0.0"
+    ]
+  }
+}

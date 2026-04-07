@@ -1,0 +1,26 @@
+{
+  "id": "plugin_repo.readme_tag_limit",
+  "title": "readme.txt tag count exceeds WordPress.org limit",
+  "summary": "WordPress.org plugin readmes should use no more than five tags.",
+  "category": "readme",
+  "severity": "error",
+  "origin": "official-handbook",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://developer.wordpress.org/plugins/wordpress-org/how-your-readme-txt-works/",
+    "https://github.com/WordPress/plugin-check/blob/trunk/docs/checks.md"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "metadata",
+    "metadata_check": "readme-tag-limit",
+    "file_globs": [
+      "readme.txt"
+    ]
+  },
+  "guidance": {
+    "why_it_matters": "Excessive tags are considered search spam and can trigger repository review issues.",
+    "fix": "Reduce the Tags header in readme.txt to five or fewer relevant tags.",
+    "false_positive_risk": "Low."
+  }
+}

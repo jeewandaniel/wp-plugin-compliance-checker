@@ -101,20 +101,20 @@ No new tag needed for readme-only changes.
 
 ---
 
-## Staged/Phased Releases (NEW)
+## Staged/Phased Releases
 
-WordPress.org now supports controlled rollouts:
+WordPress.org rollout controls may evolve over time. If phased or delayed rollout options are available to your plugin or account, treat them as release-management tools rather than a substitute for testing.
 
 ### Delay Auto-updates
 
-Opt-in feature to delay auto-updates for 24 hours after release. This allows you to:
+If delayed auto-update controls are available, they can help you:
 - Monitor for issues
 - Roll back if problems are found
 - Test with early adopters first
 
-### How to Enable
+### Availability
 
-Contact the plugins team or enable via your plugin's advanced settings when available.
+Check current WordPress.org plugin developer documentation or your plugin management screens for the latest rollout controls available to your plugin.
 
 ---
 
@@ -283,10 +283,10 @@ jobs:
 | Action | Wait Time |
 |--------|-----------|
 | CDN cache update (plugin files) | Up to 6 hours |
-| **Search results update** | **Up to 72 hours** |
+| **Search results update** | **Often 6 to 14 days** |
 | Asset images (banners/icons) | Up to 24 hours |
 
-> After your first upload, your plugin may not appear in WordPress.org search results for up to 72 hours due to the directory size.
+> After your first upload, your plugin may not appear in WordPress.org search results immediately. Current WordPress.org FAQ guidance indicates search indexing commonly takes 6 to 14 days.
 
 ---
 

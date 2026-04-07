@@ -304,3 +304,7 @@ svn ci -m "Tagging version X.Y.Z"
 svn ls https://plugins.svn.wordpress.org/SLUG/trunk/
 svn ls https://plugins.svn.wordpress.org/SLUG/tags/
 ```
+
+## Search Visibility Note
+
+Plugin search visibility often lags behind SVN deployment. Current WordPress.org guidance indicates search indexing can take substantially longer than a few hours, so do not treat fast search appearance as guaranteed after release.

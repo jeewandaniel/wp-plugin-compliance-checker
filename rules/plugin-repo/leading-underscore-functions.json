@@ -1,0 +1,30 @@
+{
+  "id": "plugin_repo.leading_underscore_functions",
+  "title": "Leading underscore function names",
+  "summary": "Functions with leading underscores are discouraged and commonly treated as a plugin review issue unless they are PHP magic methods.",
+  "category": "plugin-repo",
+  "severity": "error",
+  "origin": "field-experience",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://developer.wordpress.org/plugins/plugin-basics/best-practices/",
+    "https://github.com/WordPress/plugin-check/blob/trunk/docs/checks.md"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "regex",
+    "pattern_mode": "extended-regex",
+    "file_globs": [
+      "*.php"
+    ],
+    "patterns": [
+      "function[[:space:]]+_[a-zA-Z0-9_]+[[:space:]]*\\("
+    ],
+    "notes": "Magic methods such as __construct are not matched by this pattern."
+  },
+  "guidance": {
+    "why_it_matters": "WordPress.org review expects plugin code in the public namespace to use clear, unique names and avoids underscore-prefixed globals and functions.",
+    "fix": "Rename helper functions to use a unique plugin prefix rather than a leading underscore.",
+    "false_positive_risk": "Medium. String literals and commented code may still match."
+  }
+}

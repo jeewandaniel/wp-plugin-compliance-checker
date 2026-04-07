@@ -111,6 +111,11 @@ Initial release.
 - For older versions: can include minor (e.g., `6.4.3`)
 - Don't claim compatibility with unreleased versions
 
+### Header Source of Truth
+
+- `Requires at least` and `Requires PHP` are parsed from the main plugin file by WordPress since WordPress 5.8.
+- Keep those values aligned in both the plugin header and `readme.txt` for clarity, but treat the main plugin file as the authoritative source for those headers.
+
 ---
 
 ## Section Requirements

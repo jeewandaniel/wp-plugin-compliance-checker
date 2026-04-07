@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "plugin_repo.no_inline_style_tags",
+      "path": "plugin-repo/no-inline-style-tags.json"
+    },
+    {
+      "id": "plugin_repo.no_inline_script_tags",
+      "path": "plugin-repo/no-inline-script-tags.json"
+    },
+    {
+      "id": "security.no_unsanitized_superglobals",
+      "path": "security/no-unsanitized-superglobals.json"
+    },
+    {
+      "id": "security.late_escaping",
+      "path": "security/late-escaping.json"
+    },
+    {
+      "id": "plugin_repo.forbidden_functions",
+      "path": "plugin-repo/forbidden-functions.json"
+    },
+    {
+      "id": "plugin_repo.forbidden_ai_artifacts",
+      "path": "plugin-repo/forbidden-ai-artifacts.json"
+    },
+    {
+      "id": "plugin_repo.forbidden_release_files",
+      "path": "plugin-repo/forbidden-release-files.json"
+    },
+    {
+      "id": "plugin_repo.leading_underscore_functions",
+      "path": "plugin-repo/leading-underscore-functions.json"
+    },
+    {
+      "id": "plugin_repo.localhost_references",
+      "path": "plugin-repo/localhost-references.json"
+    },
+    {
+      "id": "plugin_repo.heredoc_usage",
+      "path": "plugin-repo/heredoc-usage.json"
+    },
+    {
+      "id": "plugin_repo.stable_tag_consistency",
+      "path": "readme/stable-tag-consistency.json"
+    },
+    {
+      "id": "plugin_repo.readme_tag_limit",
+      "path": "readme/tag-limit.json"
+    },
+    {
+      "id": "plugin_repo.direct_file_access",
+      "path": "security/direct-file-access.json"
+    }
+  ]
+}

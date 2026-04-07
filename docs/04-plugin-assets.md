@@ -51,9 +51,9 @@ banner-1544x500-rtl.png         # Retina RTL
 banner-1544x500-de_DE.png       # Retina German
 ```
 
-### Requirements
+### Notes
 
-- Retina images are add-ons only — standard banner is required first
+- Plugin banners are optional, but if you provide a retina banner you should also provide the standard banner
 - Keep important content away from edges (may be cropped on mobile)
 - Avoid text-heavy banners (won't scale well)
 - JPG for photos, PNG for graphics/text
@@ -72,8 +72,9 @@ The square icon shown in search results and plugin listings.
 | Retina/Hi-DPI | `icon-256x256.png` or `.jpg` or `.gif` | 256 × 256 px | 1 MB |
 | Vector | `icon.svg` | Any (vector) | 1 MB |
 
-### Requirements
+### Notes
 
+- Plugin icons are optional, but strongly recommended
 - If no icon is provided, WordPress generates a default colored icon
 - SVG icons supported, but PNG fallback recommended for older browsers
 - GIF supported but NOT animated GIFs
@@ -192,10 +193,8 @@ svn ci -m "Add plugin assets (banner, icon, screenshots)"
 
 Before submission, verify:
 
-- [ ] `banner-772x250.png` exists (standard banner)
-- [ ] `banner-1544x500.png` exists (retina banner, recommended)
-- [ ] `icon-128x128.png` exists (standard icon)
-- [ ] `icon-256x256.png` exists (retina icon, recommended)
+- [ ] Optional banner assets are correctly sized if included
+- [ ] Optional icon assets are correctly sized if included
 - [ ] Screenshots numbered correctly (1, 2, 3...)
 - [ ] Screenshot count matches readme.txt lines
 - [ ] All filenames are lowercase

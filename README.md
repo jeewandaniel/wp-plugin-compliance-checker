@@ -1,258 +1,365 @@
 # WordPress.org Plugin Compliance Checker
 
-**A comprehensive toolkit for WordPress plugins targeting the official WordPress.org plugin directory — from pre-submission validation through approval to going live via SVN.**
+WordPress.org submission guidance, preflight checks, merged Plugin Check reporting, and MCP tooling for plugin developers and AI coding assistants.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
----
+## What This Is
 
-## What This Covers
+This project helps WordPress plugin developers catch common WordPress.org submission problems before review, understand what the official rules actually mean, and turn that guidance into a workflow that works in:
 
-This tool guides you through the **entire WordPress.org plugin lifecycle**:
+- a local CLI
+- an MCP client such as Claude Code or Codex
+- shell scripts and CI
+- markdown reports for teams and clients
 
-| Phase | Documentation |
-|-------|---------------|
-| **Pre-Submission** | Code requirements, security checks, file structure, readme.txt validation |
-| **Submission** | Plugin Check tool, common rejection reasons, fix examples |
-| **Post-Approval** | SVN setup, first upload, creating assets (banners/icons), tagging releases |
-| **Maintenance** | Releasing updates, security patches, "Tested up to" updates |
+It is designed to complement the official WordPress Plugin Check ecosystem, not replace it.
 
----
+## What You Can Do Today
 
-## Why This Exists
+This repository is already usable as a real toolchain.
 
-**Only ~1% of WordPress plugins pass the WordPress.org review on their first submission attempt.**
+- Scan a plugin directory before submission.
+- Scan a release ZIP instead of only the source repo.
+- Generate human-readable or JSON results.
+- Merge your own findings with saved official Plugin Check output.
+- Import raw `wp plugin check --format=json` CLI result files such as `plugin-check-results.txt`.
+- Auto-discover common `plugin-check-results.*` artifacts in action-style workflows.
+- Expose the same behavior through a real MCP server.
+- Render a markdown compliance report for a teammate, client, or PR workflow.
 
-The WordPress.org plugin review process is notoriously strict. The review team checks for security vulnerabilities, coding standards compliance, policy violations, and dozens of other requirements. Most developers go through 3+ revision cycles before approval.
+## Trust, Scope, and Sources
 
-This tool was created after successfully getting [Sant Chat AI](https://wordpress.org/plugins/sant-chat-ai/) approved on the **first submission attempt** (April 2026) — a rare achievement that required extensive research into exactly what the review team looks for.
+This project is intentionally opinionated, but it is not hand-wavy.
 
----
+It is grounded in:
 
-## What This Tool Checks
+- official WordPress.org plugin handbook guidance
+- the official Plugin Check project
+- the official Plugin Check GitHub Action workflow
+- real submission and release workflow research
 
-This compliance checker validates your plugin against the **actual requirements** that cause rejections:
+It is also intentionally explicit about scope:
 
-| Category | Checks Performed |
-|----------|------------------|
-| **Security** | Input sanitization, output escaping, nonce verification, capability checks, SQL injection prevention, direct file access protection |
-| **Code Quality** | Inline styles/scripts detection, function prefixing, forbidden functions, HEREDOC usage, WordPress library bundling |
-| **File Structure** | Forbidden files (.sh, .phar, .exe), forbidden directories (node_modules, .git, AI configs), AI instruction files |
-| **readme.txt** | Version consistency, stable tag validation, tag count limits, required sections |
-| **Policy Compliance** | Localhost references, update checker detection, trademark violations |
+- some checks are implemented natively here
+- some are heuristic only
+- some are delegated to official Plugin Check
+- some are docs-only or still planned
 
----
+If someone wants to challenge coverage, the project should be able to point to both source material and an honest gap map.
+
+Use these docs as the trust layer:
+
+- [docs/source-matrix.md](docs/source-matrix.md) for source traceability
+- [docs/coverage-matrix.md](docs/coverage-matrix.md) for implemented vs delegated coverage
+- [rules/README.md](rules/README.md) for how the executable rules layer is structured
+
+The claim this repository makes is not "we cover literally everything better than WordPress."
+
+The claim is:
+
+- this is a practical WordPress.org compliance toolkit
+- it is backed by official sources
+- it exposes its current coverage honestly
+- it gives developers one place to run checks, merge findings, and understand what to fix
+
+## Why It Exists
+
+WordPress.org submission problems are often not just code problems. They are workflow problems, packaging problems, readme problems, and “what does the reviewer actually mean?” problems.
+
+Official tools are essential, but they do not always provide the best developer experience for:
+
+- first-time plugin authors
+- AI-assisted plugin development
+- agencies preparing client plugins for submission
+- release validation against the actual ZIP artifact
+
+This project tries to sit in that gap: faster feedback, clearer explanations, one shared report model, and multiple ways to consume it.
+
+## Best Use Cases
+
+### First-time plugin developer
+
+You are building your first plugin with Claude Code, Codex, or another assistant and want a submission-aware reviewer while you work.
+
+Example flow:
+
+```bash
+./bin/wp-plugin-compliance scan /path/to/plugin
+```
+
+Ask your AI client:
+
+- "Scan this plugin and tell me what would likely block WordPress.org approval."
+- "Fix the error findings first, then rescan."
+
+### Release preflight
+
+You want to check the ZIP you actually plan to upload, not just your working directory.
+
+```bash
+./bin/wp-plugin-compliance scan /path/to/plugin.zip
+```
+
+This is especially useful for catching release junk such as development files, packaged archives, AI instruction files, and other review-unfriendly artifacts.
+
+### Merge official Plugin Check output
+
+You already ran Plugin Check elsewhere and want one combined report.
+
+```bash
+./bin/wp-plugin-compliance scan --format=json \
+  --plugin-check-report plugin-check-results.txt \
+  /path/to/plugin
+```
+
+or
+
+```bash
+./bin/wp-plugin-compliance scan --format=json \
+  --plugin-check-json plugin-check-report.json \
+  /path/to/plugin
+```
+
+### MCP workflow
+
+You want Claude Code, Codex, or another MCP client to use the scanner directly as a tool.
+
+```bash
+node mcp/server.js
+```
+
+The MCP server can:
+
+- scan a plugin directory
+- scan a release ZIP
+- merge Plugin Check results
+- render markdown reports
+- list rule metadata
+- explain a specific rule by ID
+
+By default, the MCP server is now secure-by-default for local use:
+
+- scan and import paths are restricted to the current working directory unless you configure allowed roots explicitly
+- imported Plugin Check reports are subject to the same path restrictions
+- ZIP inputs are bounded by archive size, entry count, extracted size, and extraction timeout limits
+
+Recommended setup:
+
+- run the MCP server with its working directory set to the plugin workspace
+- set `WP_PLUGIN_COMPLIANCE_ALLOWED_ROOTS` to that workspace path
+
+See [docs/mcp.md](docs/mcp.md) for a copy-pasteable config example.
+
+### Team or client reporting
+
+You want a readable report instead of raw terminal output.
+
+```bash
+./bin/wp-plugin-compliance scan --format=json /path/to/plugin > report.json
+./bin/wp-plugin-compliance report report.json
+```
+
+## Current Product Shape
+
+### Shared Core
+
+The repository now has a real shared core under [src/README.md](src/README.md) that powers the CLI, shell wrappers, report rendering, and MCP adapter.
+
+### Stable Surfaces
+
+- CLI: [bin/wp-plugin-compliance](bin/wp-plugin-compliance)
+- Shell wrappers: [scripts/check-rules.sh](scripts/check-rules.sh), [scripts/check-compliance.sh](scripts/check-compliance.sh)
+- Markdown renderer: [scripts/render-markdown-report.sh](scripts/render-markdown-report.sh)
+- MCP server: [mcp/server.js](mcp/server.js)
+- Claude skill: [skills/wp-plugin-check/SKILL.md](skills/wp-plugin-check/SKILL.md)
+
+### Rules and Coverage
+
+- Machine-readable rules: [rules](rules)
+- Coverage planning against official Plugin Check: [docs/coverage-matrix.md](docs/coverage-matrix.md)
+- Output contract: [schemas/findings-report.schema.json](schemas/findings-report.schema.json)
+
+## Quick Start
+
+### Scan a plugin
+
+```bash
+./bin/wp-plugin-compliance scan /path/to/your-plugin
+```
+
+### Scan a ZIP
+
+```bash
+./bin/wp-plugin-compliance scan /path/to/your-plugin.zip
+```
+
+### Emit JSON
+
+```bash
+./bin/wp-plugin-compliance scan --format=json /path/to/your-plugin
+```
+
+### Merge Plugin Check output
+
+```bash
+./bin/wp-plugin-compliance scan --format=json \
+  --plugin-check-report plugin-check-results.txt \
+  /path/to/your-plugin
+```
+
+### Auto-discover action-style Plugin Check artifacts
+
+```bash
+./bin/wp-plugin-compliance scan --format=json \
+  --plugin-check-auto \
+  /path/to/your-plugin
+```
+
+### Render a markdown report
+
+```bash
+./bin/wp-plugin-compliance report report.json
+```
+
+### Run the full local verification suite
+
+```bash
+./bin/wp-plugin-compliance test
+```
+
+## MCP
+
+This repository now includes a functioning MCP stdio server in [mcp/server.js](mcp/server.js).
+
+Tools exposed today:
+
+- `scan_plugin`
+- `render_report`
+- `list_rules`
+- `get_rule`
+
+That means this is no longer just "MCP-ready." It is an actual working MCP server on top of the shared compliance engine.
+
+See [docs/mcp.md](docs/mcp.md) for the current MCP contract.
+
+Security note:
+
+- MCP is not "risk-free just because it is a layer"
+- this server is intentionally thin and does not expose arbitrary shell execution
+- it now defaults to workspace-scoped path access instead of unrestricted local reads
+
+## What The Report Model Gives You
+
+The shared JSON report can represent:
+
+- project-native heuristic findings
+- imported official Plugin Check findings
+- source-by-source totals
+- imported report metadata
+- one merged verdict and summary
+
+That makes it useful for:
+
+- CI decisions
+- AI agent tool calls
+- markdown report generation
+- future editor integrations
+
+See [docs/output-format.md](docs/output-format.md) and [schemas/findings-report.schema.json](schemas/findings-report.schema.json).
 
 ## Official Sources
 
-This tool is built from **official WordPress.org documentation and tools**, not guesswork:
+This project is grounded in official WordPress.org sources and the official Plugin Check codebase.
 
-### Primary Sources
+Primary references:
 
-| Source | URL | What It Covers |
-|--------|-----|----------------|
-| **Detailed Plugin Guidelines** | [developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/](https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/) | All 18 official guidelines (GPL, trialware, tracking, external services, admin behavior, etc.) |
-| **How to Use Subversion** | [developer.wordpress.org/plugins/wordpress-org/how-to-use-subversion/](https://developer.wordpress.org/plugins/wordpress-org/how-to-use-subversion/) | SVN commands, directory structure, tagging releases |
-| **How readme.txt Works** | [developer.wordpress.org/plugins/wordpress-org/how-your-readme-txt-works/](https://developer.wordpress.org/plugins/wordpress-org/how-your-readme-txt-works/) | Header requirements, sections, markdown support |
-| **Plugin Assets** | [developer.wordpress.org/plugins/wordpress-org/plugin-assets/](https://developer.wordpress.org/plugins/wordpress-org/plugin-assets/) | Banner sizes, icon requirements, screenshot naming |
-| **Plugin Check Tool** | [wordpress.org/plugins/plugin-check/](https://wordpress.org/plugins/plugin-check/) | Official automated checker (PHPCS rules, file detection) |
-| **Plugin Team Blog** | [make.wordpress.org/plugins/](https://make.wordpress.org/plugins/) | Policy updates, new requirements, statistics |
+- [Detailed Plugin Guidelines](https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/)
+- [Common Issues](https://developer.wordpress.org/plugins/wordpress-org/common-issues/)
+- [How Your readme.txt Works](https://developer.wordpress.org/plugins/wordpress-org/how-your-readme-txt-works/)
+- [Plugin Assets](https://developer.wordpress.org/plugins/wordpress-org/plugin-assets/)
+- [How to Use Subversion](https://developer.wordpress.org/plugins/wordpress-org/how-to-use-subversion/)
+- [Plugin Developer FAQ](https://developer.wordpress.org/plugins/wordpress-org/plugin-developer-faq/)
+- [Plugin Check on WordPress.org](https://wordpress.org/plugins/plugin-check/)
+- [Plugin Check source code](https://github.com/WordPress/plugin-check)
+- [Plugin Check Action](https://github.com/WordPress/plugin-check-action)
 
-### Additional References
+Supporting repo docs:
 
-- [WordPress Security APIs](https://developer.wordpress.org/apis/security/) — Sanitization, escaping, nonces
-- [PHP Coding Standards](https://developer.wordpress.org/coding-standards/wordpress-coding-standards/php/) — WordPress-specific PHP standards
-- [Plugin Check GitHub](https://github.com/WordPress/plugin-check) — Source code revealing exact detection patterns
-- [Readme Validator](https://wordpress.org/plugins/developers/readme-validator/) — Official validation tool
+- [docs/architecture.md](docs/architecture.md)
+- [docs/coverage-matrix.md](docs/coverage-matrix.md)
+- [docs/source-matrix.md](docs/source-matrix.md)
+- [rules/README.md](rules/README.md)
 
----
+These references are there on purpose. They are part of the product's trust model, not filler.
 
-## How This Was Built
+## Current Limits
 
-### Research Process
+This repository is already useful, but it is not yet the final vision.
 
-1. **Official Documentation Review** — Read every page of the WordPress.org plugin developer documentation
-2. **Plugin Check Source Analysis** — Examined the [Plugin Check GitHub repo](https://github.com/WordPress/plugin-check) to understand exact PHPCS sniffs and file detection patterns
-3. **Community Research** — Analyzed WordPress.org support forums, GitHub issues, and developer blog posts about rejection reasons
-4. **Real-World Testing** — Applied findings to [Sant Chat AI](https://wordpress.org/plugins/sant-chat-ai/), achieving first-submission approval
+It does not currently:
 
-### Key Statistics Discovered
+- implement the full official Plugin Check rule surface itself
+- guarantee WordPress.org approval
+- replace human review by the plugins team
+- prove logical security correctness
+- eliminate heuristic false positives
+- directly execute live `wp plugin check` on this machine right now
 
-- **~1% first-pass approval rate** (historically)
-- **69.5% overall approval rate** (2025 data)
-- **Average 3 interactions** per plugin before approval
-- **85% of initial reviews** now AI-automated (as of 2025)
-- **500+ submissions per week** (as of March 2026)
-- **Plugin Check integration (Sep 2024)** reduced issues by 41%
+The last point is environmental: direct execution is the natural next step, but this machine currently does not have `php` or `wp` installed.
 
-### New Requirements (2025-2026)
+## Repository Map
 
-- **English readme.txt required** (July 2025) — Description must be in English
-- **AI instruction file detection** (Plugin Check 1.8+) — .cursor/, .claude/, CLAUDE.md, etc.
-- **HEREDOC sniff** — HEREDOC syntax now flagged (prevents escaping detection)
-- **Plugin Namer tool** — AI-powered name validation (WordPress 7.0+)
-
----
-
-## Documentation Structure
-
-```
-docs/
-├── 01-code-requirements.md     # Security: sanitization, escaping, nonces, SQL
-├── 02-file-structure.md        # Directory layout, forbidden files, headers
-├── 03-readme-txt.md            # Complete readme.txt formatting guide
-├── 04-plugin-assets.md         # Banners, icons, screenshots (SVN assets/)
-├── 05-svn-workflow.md          # Complete SVN guide for WP.org hosting
-├── 06-official-guidelines.md   # All 18 official guidelines with numbers
-├── 07-plugin-check-tool.md     # Using the official Plugin Check tool
-├── 08-common-rejections.md     # Top 20 rejection reasons, ranked
-└── 09-post-approval.md         # Updates, maintenance, staged releases
+```text
+docs/       Handbook guidance, architecture, coverage, integration docs
+rules/      Machine-readable rule definitions and schema-linked data
+scripts/    Shell-compatible entry points
+skills/     AI adapters, starting with Claude
+src/        Shared core engine, importer, renderer, and CLI logic
+mcp/        MCP server and adapter layer
+tests/      Fixture-based regression coverage
+templates/  Submission-ready supporting files
 ```
 
----
+## Documentation
 
-## Usage
+### Core Product Docs
 
-### As a Claude Code Skill
+- [docs/cli.md](docs/cli.md)
+- [docs/mcp.md](docs/mcp.md)
+- [docs/output-format.md](docs/output-format.md)
+- [docs/integrations.md](docs/integrations.md)
+- [docs/testing.md](docs/testing.md)
 
-```bash
-# Install
-git clone https://github.com/jeewandaniel/wp-plugin-compliance-checker.git
-cp -r wp-plugin-compliance-checker/skills/wp-plugin-check ~/.claude/skills/
+### WordPress.org Process Docs
 
-# Use
-/wp-plugin-check /path/to/your-plugin
-```
-
-### Command Line Script
-
-```bash
-# Make executable
-chmod +x scripts/check-compliance.sh
-
-# Run
-./scripts/check-compliance.sh /path/to/your-plugin
-```
-
-### Manual Checks
-
-See `docs/08-common-rejections.md` for grep commands you can run manually.
-
----
-
-## Quick Reference: Top 5 Rejection Reasons
-
-| # | Issue | Fix |
-|---|-------|-----|
-| 1 | Inline `<style>`/`<script>` tags | Use `wp_enqueue_*()` + `wp_add_inline_*()` |
-| 2 | Missing input sanitization | `sanitize_text_field(wp_unslash($_POST['x']))` |
-| 3 | Missing output escaping | `esc_html()`, `esc_attr()`, `esc_url()` |
-| 4 | Missing nonce verification | `wp_nonce_field()` + `wp_verify_nonce()` |
-| 5 | Generic function names | Use 4+ character unique prefix (`myplugin_`) |
-
----
-
-## Quick Reference: Going Live After Approval
-
-After your plugin is approved, you'll receive two emails:
-1. **Review Complete** — General SVN instructions
-2. **Approval Email** — Your specific SVN URL and username
-
-### First-Time SVN Upload
-
-```bash
-# 1. Set SVN password at: https://profiles.wordpress.org/me/profile/edit/group/3/?screen=svn-password
-
-# 2. Checkout your empty repo
-svn co https://plugins.svn.wordpress.org/your-plugin-slug ~/your-plugin-svn
-cd ~/your-plugin-svn
-
-# 3. Copy plugin files to trunk (NOT zipped)
-cp -r /path/to/your-plugin/* trunk/
-
-# 4. Create assets folder and add images
-mkdir -p assets
-cp banner-772x250.png icon-128x128.png screenshot-1.png assets/
-
-# 5. Add files and set MIME types
-svn add trunk/* assets/*
-svn propset svn:mime-type image/png assets/*.png
-
-# 6. Commit and tag
-svn ci -m "Initial release v1.0.0"
-svn cp trunk tags/1.0.0
-svn ci -m "Tagging version 1.0.0"
-```
-
-### Required Assets
-
-| Asset | Size | Required |
-|-------|------|----------|
-| `banner-772x250.png` | 772×250px | Yes |
-| `banner-1544x500.png` | 1544×500px | Recommended (retina) |
-| `icon-128x128.png` | 128×128px | Yes |
-| `icon-256x256.png` | 256×256px | Recommended (retina) |
-| `screenshot-N.png` | Any | Match readme.txt |
-
-### Important Timing
-
-- **Plugin files:** May take up to 6 hours to appear
-- **Search results:** May take up to **72 hours** to update
-- **Asset images:** May take up to 24 hours to display
-
-See `docs/05-svn-workflow.md` and `docs/09-post-approval.md` for complete guides.
-
----
-
-## Maintenance
-
-This tool will be updated when:
-
-- WordPress.org publishes new guidelines
-- Plugin Check tool adds new checks
-- New rejection patterns emerge from the community
-- WordPress releases require compatibility updates
-
-**Last Updated:** April 2026
-**Maintainer:** [Sant Limited](https://sant.nz)
-
----
-
-## Limitations
-
-This tool catches common issues but is **not a replacement** for:
-
-1. **The official Plugin Check tool** — Install it: [wordpress.org/plugins/plugin-check/](https://wordpress.org/plugins/plugin-check/)
-2. **Human review** — The WordPress.org team may catch issues this tool misses
-3. **Security audits** — This checks patterns, not logic vulnerabilities
-4. **Full PHPCS analysis** — Use WordPress Coding Standards PHPCS ruleset for complete analysis
-
-**Always run the official Plugin Check before submission.**
-
----
+- [docs/01-code-requirements.md](docs/01-code-requirements.md)
+- [docs/02-file-structure.md](docs/02-file-structure.md)
+- [docs/03-readme-txt.md](docs/03-readme-txt.md)
+- [docs/04-plugin-assets.md](docs/04-plugin-assets.md)
+- [docs/05-svn-workflow.md](docs/05-svn-workflow.md)
+- [docs/06-official-guidelines.md](docs/06-official-guidelines.md)
+- [docs/07-plugin-check-tool.md](docs/07-plugin-check-tool.md)
+- [docs/08-common-rejections.md](docs/08-common-rejections.md)
+- [docs/09-post-approval.md](docs/09-post-approval.md)
 
 ## Contributing
 
-Contributions welcome! Please ensure additions are:
+Contributions are especially valuable in these areas:
 
-1. Verified against official WordPress.org documentation
-2. Tested against real plugins
-3. Include source links for any new rules
+- rule extraction from official sources
+- false-positive reduction
+- wider Plugin Check import normalization
+- coverage expansion against official checks
+- new fixture plugins and regression tests
+- adapter work for MCP, CI, and future editor integrations
 
----
+When adding new guidance or checks, prefer official sources and include links.
 
 ## License
 
-MIT License — See [LICENSE](LICENSE)
-
----
+MIT License. See [LICENSE](LICENSE).
 
 ## Credits
 
-Built by [Sant Limited](https://sant.nz) based on the experience of getting [Sant Chat AI](https://wordpress.org/plugins/sant-chat-ai/) approved on first submission.
-
-**Research compiled from:**
-- WordPress.org Plugin Directory Team documentation
-- Plugin Check tool source code analysis
-- WordPress developer community knowledge
-- Real-world submission experience
+Built by [Sant Limited](https://sant.nz) from real WordPress.org submission work, including the first-submission approval of [Sant Chat AI](https://wordpress.org/plugins/sant-chat-ai/).

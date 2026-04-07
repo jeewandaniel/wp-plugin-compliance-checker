@@ -1,0 +1,38 @@
+{
+  "id": "security.no_unsanitized_superglobals",
+  "title": "Unsanitized superglobal input",
+  "summary": "WordPress.org review and security best practices expect request data from superglobals to be unslashed and sanitized before use.",
+  "category": "security",
+  "severity": "error",
+  "origin": "official-handbook",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://developer.wordpress.org/apis/security/",
+    "https://github.com/WordPress/plugin-check/blob/trunk/docs/checks.md"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "composite",
+    "pattern_mode": "fixed",
+    "file_globs": [
+      "*.php"
+    ],
+    "patterns": [
+      "$_POST[",
+      "$_GET[",
+      "$_REQUEST[",
+      "$_SERVER[",
+      "$_FILES["
+    ],
+    "notes": "Current repo coverage is grep-based and does not perform data-flow analysis. Official static analysis should remain part of the workflow."
+  },
+  "guidance": {
+    "why_it_matters": "Using raw request data can lead to security issues and is one of the most common WordPress.org review blockers.",
+    "fix": "Use isset() checks, wp_unslash() where needed, and context-appropriate sanitization functions before processing request values.",
+    "false_positive_risk": "High. Naive text matching cannot reliably determine whether sanitization happens earlier or later in the flow.",
+    "examples": [
+      "$name = isset($_POST['name']) ? sanitize_text_field(wp_unslash($_POST['name'])) : '';",
+      "$id = isset($_GET['id']) ? absint($_GET['id']) : 0;"
+    ]
+  }
+}

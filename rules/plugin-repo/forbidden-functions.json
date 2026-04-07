@@ -1,0 +1,39 @@
+{
+  "id": "plugin_repo.forbidden_functions",
+  "title": "Forbidden or high-risk PHP functions",
+  "summary": "Some functions are disallowed or high risk in WordPress.org plugin review because they indicate dangerous execution behavior or insecure file handling.",
+  "category": "plugin-repo",
+  "severity": "error",
+  "origin": "official-plugin-check",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://github.com/WordPress/plugin-check/blob/trunk/docs/checks.md",
+    "https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "regex",
+    "pattern_mode": "fixed",
+    "file_globs": [
+      "*.php"
+    ],
+    "patterns": [
+      "eval(",
+      "passthru(",
+      "proc_open(",
+      "create_function(",
+      "move_uploaded_file",
+      "ALLOW_UNFILTERED_UPLOADS"
+    ],
+    "notes": "Current repo coverage is a small subset of the official rule surface."
+  },
+  "guidance": {
+    "why_it_matters": "These functions often indicate behavior that is insecure, bypasses WordPress APIs, or violates repository expectations.",
+    "fix": "Replace dangerous execution and upload handling with WordPress APIs such as wp_handle_upload() and remove unsafe constants or dynamic code execution patterns.",
+    "false_positive_risk": "Low to medium. Comments or examples may still be flagged by simple text search.",
+    "examples": [
+      "Use wp_handle_upload() instead of move_uploaded_file().",
+      "Avoid eval() and other dynamic execution functions entirely."
+    ]
+  }
+}

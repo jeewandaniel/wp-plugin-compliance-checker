@@ -1,0 +1,10 @@
+{
+  "name": "wp-plugin-compliance-checker-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Thin MCP stdio server for the WordPress.org Plugin Compliance Checker",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

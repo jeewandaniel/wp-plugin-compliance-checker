@@ -1,0 +1,6 @@
+FILE: sample-plugin.php
+[{"type":"ERROR","code":"plugin_header_fields","message":"Missing Requires at least header.","line":6,"column":1}]
+
+
+FILE: includes/admin-page.php
+[{"type":"WARNING","code":"late_escaping","message":"Dynamic output should be escaped for HTML context.","line":42,"column":5}]

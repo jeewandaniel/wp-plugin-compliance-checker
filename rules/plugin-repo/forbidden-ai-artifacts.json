@@ -1,0 +1,35 @@
+{
+  "id": "plugin_repo.forbidden_ai_artifacts",
+  "title": "AI instruction files and development directories in release payload",
+  "summary": "AI instruction files and development-only directories should not ship in a WordPress.org plugin release payload.",
+  "category": "file-structure",
+  "severity": "error",
+  "origin": "official-plugin-check",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://github.com/WordPress/plugin-check/blob/trunk/docs/checks.md",
+    "https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "glob",
+    "file_globs": [
+      ".cursor",
+      ".claude",
+      ".aider",
+      ".continue",
+      ".windsurf",
+      ".ai",
+      ".github",
+      "CLAUDE.md",
+      "AGENTS.md",
+      ".cursorrules"
+    ],
+    "notes": "The current shell script only covers part of the official file-type surface. The structured rules layer should grow with Plugin Check changes."
+  },
+  "guidance": {
+    "why_it_matters": "These files are development artifacts and can trigger repository review issues if included in the shipped plugin.",
+    "fix": "Exclude AI instruction files and development directories from the release build or distribution archive.",
+    "false_positive_risk": "Low. This is a release-payload concern, not a source-repo concern."
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "id": "plugin_repo.heredoc_usage",
+  "title": "Heredoc or nowdoc usage",
+  "summary": "Heredoc-style string construction can make escaping analysis harder and is commonly discouraged in WordPress.org review workflows.",
+  "category": "plugin-repo",
+  "severity": "warning",
+  "origin": "official-plugin-check",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://github.com/WordPress/plugin-check/blob/trunk/docs/checks.md",
+    "https://developer.wordpress.org/plugins/plugin-basics/best-practices/"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "regex",
+    "pattern_mode": "fixed",
+    "file_globs": [
+      "*.php"
+    ],
+    "patterns": [
+      "<<<"
+    ]
+  },
+  "guidance": {
+    "why_it_matters": "This style can hide output construction and make escaping issues harder to review.",
+    "fix": "Prefer explicit concatenation or templating patterns that keep escaping visible at output time.",
+    "false_positive_risk": "Low to medium. Examples in docs or comments may be intentional."
+  }
+}

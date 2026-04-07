@@ -1,0 +1,30 @@
+{
+  "id": "plugin_repo.direct_file_access",
+  "title": "Missing direct file access guard",
+  "summary": "PHP files in plugins should guard against direct access with an ABSPATH or equivalent check.",
+  "category": "security",
+  "severity": "error",
+  "origin": "official-plugin-check",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://github.com/WordPress/plugin-check/blob/trunk/docs/checks.md",
+    "https://developer.wordpress.org/plugins/plugin-basics/best-practices/#file-security"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "metadata",
+    "metadata_check": "direct-file-access",
+    "file_globs": [
+      "*.php"
+    ],
+    "notes": "The skill currently performs a simple head-of-file check. The neutral core should formalize this with a file-aware detector."
+  },
+  "guidance": {
+    "why_it_matters": "Direct file access guards help prevent PHP files from being executed outside the intended WordPress bootstrap context.",
+    "fix": "Add a guard near the top of each executable PHP file, such as defined('ABSPATH') || exit;.",
+    "false_positive_risk": "Medium. Not every PHP file in a plugin should be treated identically, and generated vendor code may need special handling.",
+    "examples": [
+      "defined('ABSPATH') || exit;"
+    ]
+  }
+}

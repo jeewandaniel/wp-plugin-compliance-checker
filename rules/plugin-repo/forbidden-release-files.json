@@ -1,0 +1,29 @@
+{
+  "id": "plugin_repo.forbidden_release_files",
+  "title": "Forbidden release files",
+  "summary": "Release payloads should not include executable archives, packaged artifacts, or other files that WordPress.org review commonly flags.",
+  "category": "file-structure",
+  "severity": "error",
+  "origin": "official-plugin-check",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://github.com/WordPress/plugin-check/blob/trunk/docs/checks.md",
+    "https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "glob",
+    "file_globs": [
+      "*.sh",
+      "*.phar",
+      "*.exe",
+      "*.zip"
+    ],
+    "notes": "This rule should eventually expand to match the broader official file-type surface."
+  },
+  "guidance": {
+    "why_it_matters": "Development and packaged binary artifacts are often not appropriate for WordPress.org release payloads.",
+    "fix": "Remove forbidden files from the plugin directory or release archive before submission.",
+    "false_positive_risk": "Low. This is a packaging concern."
+  }
+}

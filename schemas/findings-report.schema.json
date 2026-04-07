@@ -1,0 +1,227 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/wp-plugin-compliance-findings-report.schema.json",
+  "title": "WordPress Plugin Compliance Findings Report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "tool",
+    "runner",
+    "format_version",
+    "plugin_dir",
+    "rules_index",
+    "generated_at",
+    "verdict",
+    "summary",
+    "findings",
+    "sources",
+    "imports"
+  ],
+  "properties": {
+    "tool": {
+      "type": "string"
+    },
+    "runner": {
+      "type": "string"
+    },
+    "format_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "plugin_dir": {
+      "type": "string"
+    },
+    "rules_index": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string"
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "ready_for_deeper_review",
+        "needs_attention"
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "errors",
+        "warnings",
+        "advisories",
+        "info",
+        "executed_rules",
+        "skipped_rules"
+      ],
+      "properties": {
+        "errors": { "type": "integer", "minimum": 0 },
+        "warnings": { "type": "integer", "minimum": 0 },
+        "advisories": { "type": "integer", "minimum": 0 },
+        "info": { "type": "integer", "minimum": 0 },
+        "executed_rules": { "type": "integer", "minimum": 0 },
+        "skipped_rules": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project",
+        "plugin_check"
+      ],
+      "properties": {
+        "project": {
+          "$ref": "#/$defs/sourceCounts"
+        },
+        "plugin_check": {
+          "$ref": "#/$defs/sourceCounts"
+        }
+      }
+    },
+    "imports": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "format",
+          "path",
+          "findings"
+        ],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "findings": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "severity",
+          "source",
+          "origin",
+          "rule_id",
+          "title",
+          "summary",
+          "fix",
+          "evidence",
+          "evidence_lines",
+          "locations"
+        ],
+        "properties": {
+          "severity": {
+            "type": "string",
+            "enum": [
+              "error",
+              "warning",
+              "advisory",
+              "info"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "project",
+              "plugin_check"
+            ]
+          },
+          "origin": {
+            "type": "string"
+          },
+          "rule_id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "fix": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string"
+          },
+          "evidence_lines": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "locations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/location"
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "sourceCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "findings",
+        "errors",
+        "warnings",
+        "advisories",
+        "info"
+      ],
+      "properties": {
+        "findings": { "type": "integer", "minimum": 0 },
+        "errors": { "type": "integer", "minimum": 0 },
+        "warnings": { "type": "integer", "minimum": 0 },
+        "advisories": { "type": "integer", "minimum": 0 },
+        "info": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "line",
+        "column"
+      ],
+      "properties": {
+        "file": {
+          "type": "string"
+        },
+        "line": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "column": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

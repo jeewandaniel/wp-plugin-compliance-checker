@@ -1,0 +1,34 @@
+{
+  "id": "plugin_repo.no_inline_script_tags",
+  "title": "Inline <script> tags in PHP output",
+  "summary": "Inline script tags in PHP-rendered output are commonly flagged in WordPress.org review and should usually be replaced with enqueued scripts.",
+  "category": "plugin-repo",
+  "severity": "error",
+  "origin": "official-plugin-check",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://wordpress.org/plugins/plugin-check/",
+    "https://github.com/WordPress/plugin-check/blob/trunk/docs/checks.md"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "regex",
+    "pattern_mode": "fixed",
+    "file_globs": [
+      "*.php"
+    ],
+    "patterns": [
+      "<script"
+    ],
+    "notes": "A future engine should allow JSON script exceptions and better context handling."
+  },
+  "guidance": {
+    "why_it_matters": "WordPress plugin review expects scripts to be loaded with WordPress enqueue APIs so dependencies, scope, and loading behavior remain predictable.",
+    "fix": "Use wp_enqueue_script() and wp_add_inline_script() instead of echoing raw script tags.",
+    "false_positive_risk": "Medium. Escaped examples and JSON script payloads may need suppression logic.",
+    "examples": [
+      "wp_enqueue_script('my-plugin-admin', plugins_url('js/admin.js', __FILE__), array('jquery'), '1.0.0', true);",
+      "wp_add_inline_script('my-plugin-admin', 'window.MyPlugin=' . wp_json_encode($config) . ';', 'before');"
+    ]
+  }
+}
