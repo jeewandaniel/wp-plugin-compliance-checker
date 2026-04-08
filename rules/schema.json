@@ -98,6 +98,7 @@
             "metadata",
             "composite",
             "paired-files",
+            "ast",
             "external-tool",
             "manual"
           ]
@@ -132,6 +133,30 @@
         },
         "external_tool": {
           "type": "string"
+        },
+        "ast_query": {
+          "type": "object",
+          "description": "AST-based detection query (requires php-parser)",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["function_call", "variable_access", "class_instantiation"]
+            },
+            "functions": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Function names to detect (for function_call type)"
+            },
+            "variables": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Variable names to detect (for variable_access type)"
+            },
+            "fallback_to_regex": {
+              "type": "boolean",
+              "description": "If true, fall back to regex detection when AST parsing fails"
+            }
+          }
         }
       }
     },

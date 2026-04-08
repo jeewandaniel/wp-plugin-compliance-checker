@@ -44,5 +44,7 @@
     "schemas/",
     "scripts/generate-pr-comment.js"
   ],
-  "optionalDependencies": {}
+  "optionalDependencies": {
+    "php-parser": "^3.2.1"
+  }
 }

@@ -18,6 +18,16 @@ cd wp-plugin-compliance-checker
 
 No dependencies required — runs on Node.js 18+ out of the box.
 
+### Optional: Enhanced AST Parsing
+
+For context-aware detection that can distinguish between actual function calls vs strings/comments, install the optional php-parser dependency:
+
+```bash
+npm install php-parser
+```
+
+This enables AST-based rules that reduce false positives by understanding PHP code structure. Without it, the scanner falls back to regex-based detection which works well for most cases.
+
 ## What This Is
 
 This project helps WordPress plugin developers catch common WordPress.org submission problems before review, understand what the official rules actually mean, and turn that guidance into a workflow that works in:
@@ -142,6 +152,16 @@ If you made simple mistakes (like capitalizing 'Wordpress' incorrectly in your `
 ```bash
 ./bin/wp-plugin-compliance scan --fix /path/to/plugin
 ```
+
+### Incremental Scanning
+
+For faster rescans during development, use the `--incremental` flag to skip unchanged files:
+
+```bash
+./bin/wp-plugin-compliance scan --incremental /path/to/plugin
+```
+
+This creates a `.wp-compliance-cache.json` file in your plugin directory that tracks file hashes. Subsequent scans will only re-analyze files that have changed, significantly speeding up large plugin analysis.
 
 ### MCP workflow
 

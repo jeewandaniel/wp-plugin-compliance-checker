@@ -10,6 +10,8 @@ const {
   resolveAllowedRoots,
 } = require('./security');
 const { runFixer } = require('./fixers');
+const { isAstAvailable, runAstDetection } = require('./ast-runner');
+const { createCacheContext, CACHE_FILENAME } = require('./cache');
 
 const SKIPPED_COVERAGE = new Set(['delegated', 'docs-only', 'planned']);
 const DEFAULT_SCAN_FILE_BYTES = Number(process.env.WP_PLUGIN_COMPLIANCE_MAX_SCAN_FILE_BYTES || 1024 * 1024);
@@ -60,7 +62,8 @@ function walkEntries(rootDir, limits) {
   const entries = [];
   const stack = [rootDir];
 
-  let ignoreGlobs = ['.git', 'node_modules'];
+  // Default ignores: .git, node_modules, and our cache file
+  let ignoreGlobs = ['.git', 'node_modules', CACHE_FILENAME];
   try {
     const ignorePath = path.join(rootDir, '.wpignore');
     if (fs.existsSync(ignorePath)) {
@@ -294,6 +297,34 @@ function runRule(rule, context) {
         }
       }
       return { skipped: false, evidenceLines: evidence };
+    }
+
+    case 'ast': {
+      // AST-based detection using php-parser
+      if (!isAstAvailable()) {
+        // Fall back to regex if AST not available and fallback enabled
+        if (detection.ast_query?.fallback_to_regex && patterns.length > 0 && fileGlobs.length > 0) {
+          const files = collectFilesByGlobs(entries, fileGlobs);
+          const evidenceLines = files.length > 0 ? findPatternEvidence(files, patterns, patternMode, limits, ignoreComments) : [];
+          return { skipped: false, evidenceLines };
+        }
+        return { skipped: true, evidenceLines: [], reason: 'php-parser not installed' };
+      }
+
+      const files = collectFilesByGlobs(entries, fileGlobs.length > 0 ? fileGlobs : ['*.php']);
+      const allEvidence = [];
+
+      for (const filePath of files) {
+        const code = safeReadText(filePath, limits);
+        if (!code) continue;
+
+        const result = runAstDetection(rule, code, filePath);
+        if (!result.skipped && result.evidenceLines.length > 0) {
+          allEvidence.push(...result.evidenceLines);
+        }
+      }
+
+      return { skipped: false, evidenceLines: uniqueLines(allEvidence) };
     }
 
     default:
@@ -547,6 +578,7 @@ function scanPlugin(repoRoot, targetPath, options = {}) {
   const pluginCheckReportPaths = options.pluginCheckReportPaths || [];
   const pluginCheckAuto = options.pluginCheckAuto || false;
   const runWpCli = options.runWpCli || false;
+  const incremental = options.incremental || false;
   const allowedRoots = resolveAllowedRoots(options.allowedRoots || []);
   const limits = {
     maxScanFileBytes: DEFAULT_SCAN_FILE_BYTES,
@@ -563,15 +595,31 @@ function scanPlugin(repoRoot, targetPath, options = {}) {
   let autoWpCliPath = null;
 
   try {
+    const rulesIndexPath = path.join(repoRoot, 'rules', 'index.json');
     const rules = loadIndexedRules(repoRoot);
     const entries = walkEntries(target.scanPath, limits);
+
+    // Initialize cache context for incremental scanning
+    const cacheCtx = createCacheContext(target.scanPath, rulesIndexPath, incremental);
+    const existingFiles = new Set(entries.filter(e => e.isFile).map(e => e.path));
+
+    // Clean up deleted files from cache
+    if (cacheCtx.enabled) {
+      cacheCtx.cleanup(existingFiles);
+    }
+
     const context = {
       scanPath: target.scanPath,
       entries,
       limits,
+      cacheCtx,
     };
     const projectFindings = [];
     const summary = createSummarySkeleton();
+
+    // Track cache stats
+    let cacheHits = 0;
+    let cacheMisses = 0;
 
     for (const rule of rules) {
       const result = runRule(rule, context);
@@ -588,6 +636,28 @@ function scanPlugin(repoRoot, targetPath, options = {}) {
         projectFindings.push(finding);
         addFindingToSummary(summary, finding);
       }
+
+      // Track cache usage if available
+      if (result.cacheHit !== undefined) {
+        if (result.cacheHit) {
+          cacheHits += 1;
+        } else {
+          cacheMisses += 1;
+        }
+      }
+    }
+
+    // Update cache entries for all PHP files that were scanned
+    if (cacheCtx.enabled) {
+      for (const entry of entries) {
+        if (entry.isFile && entry.name.endsWith('.php')) {
+          const fileFindings = projectFindings.filter(f =>
+            f.evidence_lines.some(line => line.startsWith(entry.path + ':'))
+          );
+          cacheCtx.updateEntry(entry.path, fileFindings);
+        }
+      }
+      cacheCtx.save();
     }
 
     if (options.autoFix && projectFindings.length > 0) {
@@ -671,6 +741,14 @@ function scanPlugin(repoRoot, targetPath, options = {}) {
         path: entry.path,
         findings: entry.findings.length,
       })),
+      ...(cacheCtx.enabled && {
+        cache: {
+          enabled: true,
+          rules_changed: cacheCtx.rulesChanged,
+          hits: cacheHits,
+          misses: cacheMisses,
+        },
+      }),
     };
 
     return {

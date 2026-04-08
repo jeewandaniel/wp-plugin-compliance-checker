@@ -20,7 +20,7 @@ function getVersion() {
 
 function printUsage() {
   process.stdout.write(`Usage:
-  wp-plugin-compliance scan [--format human|json] [--plugin-check-report report.{json,txt}] [--plugin-check-auto] [--plugin-check-json report.json] [--run-wp-cli] [--fix] /path/to/plugin-or-zip
+  wp-plugin-compliance scan [--format human|json] [--plugin-check-report report.{json,txt}] [--plugin-check-auto] [--plugin-check-json report.json] [--run-wp-cli] [--fix] [--incremental] /path/to/plugin-or-zip
   wp-plugin-compliance report [report.json]
   wp-plugin-compliance test
   wp-plugin-compliance version
@@ -32,6 +32,10 @@ Commands:
   test     Run the local regression suites.
   version  Show version number.
   help     Show this message.
+
+Options:
+  --incremental  Use file hash caching to skip unchanged files (faster rescans)
+  --fix          Auto-fix simple issues where possible
 
 Exit Codes:
   0  Clean scan (no errors)
@@ -49,6 +53,7 @@ function parseScanArgs(argv) {
   let pluginCheckAuto = false;
   let runWpCli = false;
   let autoFix = false;
+  let incremental = false;
 
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
@@ -110,6 +115,11 @@ function parseScanArgs(argv) {
       continue;
     }
 
+    if (value === '--incremental') {
+      incremental = true;
+      continue;
+    }
+
     if (value === '-h' || value === '--help') {
       printUsage();
       process.exit(0);
@@ -134,6 +144,7 @@ function parseScanArgs(argv) {
     pluginCheckAuto,
     runWpCli,
     autoFix,
+    incremental,
   };
 }
 
@@ -169,7 +180,7 @@ function main() {
 
   switch (command) {
     case 'scan': {
-      const { format, targetPath, pluginCheckJsonPaths, pluginCheckReportPaths, pluginCheckAuto, runWpCli, autoFix } = parseScanArgs(process.argv.slice(3));
+      const { format, targetPath, pluginCheckJsonPaths, pluginCheckReportPaths, pluginCheckAuto, runWpCli, autoFix, incremental } = parseScanArgs(process.argv.slice(3));
       const scan = scanPlugin(repoRoot, targetPath, {
         runnerLabel,
         pluginCheckJsonPaths,
@@ -177,6 +188,7 @@ function main() {
         pluginCheckAuto,
         runWpCli,
         autoFix,
+        incremental,
       });
       const output = format === 'json'
         ? JSON.stringify(scan.report, null, 2)
