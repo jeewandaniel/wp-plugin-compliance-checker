@@ -1,0 +1,25 @@
+{
+  "id": "plugin_repo.missing_source_code",
+  "title": "Missing un-minified source code",
+  "summary": "Minified CSS or JS files were detected without their completely human-readable .src equivalents, violating open source policies.",
+  "category": "plugin-repo",
+  "severity": "error",
+  "origin": "project-heuristic",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "paired-files",
+    "file_globs": [
+      "*.min.js",
+      "*.min.css"
+    ]
+  },
+  "guidance": {
+    "why_it_matters": "WordPress demands human-readable code. If you bundle a compiled/minified asset, you MUST include the original raw unminified source code alongside it.",
+    "fix": "Ensure that your build process outputs both the compiled .min.js/.min.css file AND includes the raw .js/.css file in the submitted plugin archive.",
+    "false_positive_risk": "Medium. Third-party vendor bundles often omit sourcemaps and raw JS."
+  }
+}

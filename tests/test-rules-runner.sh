@@ -108,18 +108,20 @@ run_case \
     1 \
     "plugin_repo.no_inline_style_tags"
 
+# Exit code 1 = findings exist (standardized exit codes)
 run_case \
     "naming-and-readme" \
     "$FIXTURES_DIR/fail/naming-and-readme" \
-    3 \
+    1 \
     "plugin_repo.leading_underscore_functions" \
     "plugin_repo.readme_tag_limit" \
     "plugin_repo.direct_file_access"
 
+# Exit code 1 = findings exist (standardized exit codes)
 run_case \
     "release-artifacts" \
     "$FIXTURES_DIR/fail/release-artifacts" \
-    2 \
+    1 \
     "plugin_repo.forbidden_release_files" \
     "plugin_repo.forbidden_ai_artifacts"
 
@@ -136,10 +138,11 @@ run_json_case \
     0 \
     '.summary.errors == 0 and (.findings | length) == 0 and .runner == "check-rules.sh"'
 
+# Exit code 1 = findings exist (standardized exit codes)
 run_json_case \
     "naming-and-readme" \
     "$FIXTURES_DIR/fail/naming-and-readme" \
-    3 \
+    1 \
     '.summary.errors == 3 and (.findings | map(.rule_id) | index("plugin_repo.direct_file_access")) != null'
 
 if [ "$FAILURES" -gt 0 ]; then

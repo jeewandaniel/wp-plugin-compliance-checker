@@ -1,0 +1,29 @@
+{
+  "id": "plugin_repo.core_package_duplication",
+  "title": "Duplication of WP core packages",
+  "summary": "Plugins should not bundle scripts or libraries that are already packaged natively into WordPress Core.",
+  "category": "plugin-repo",
+  "severity": "error",
+  "origin": "project-heuristic",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "glob",
+    "file_globs": [
+      "jquery.js",
+      "jquery.min.js",
+      "class-phpmailer.php",
+      "PHPMailer.php",
+      "underscore.js",
+      "moment.js"
+    ]
+  },
+  "guidance": {
+    "why_it_matters": "Providing your own copy of jQuery or PHPmailer conflicts with WordPress Core versions, leading to massive caching, performance, and security vulnerabilities.",
+    "fix": "Delete the included library and use wp_enqueue_script('jquery') or other WP-native loading methods.",
+    "false_positive_risk": "Low. Unless they are inside a .wpignore directory like vendor or node_modules."
+  }
+}

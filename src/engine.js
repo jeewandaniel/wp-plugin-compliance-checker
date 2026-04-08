@@ -9,6 +9,7 @@ const {
   canonicalizePath,
   resolveAllowedRoots,
 } = require('./security');
+const { runFixer } = require('./fixers');
 
 const SKIPPED_COVERAGE = new Set(['delegated', 'docs-only', 'planned']);
 const DEFAULT_SCAN_FILE_BYTES = Number(process.env.WP_PLUGIN_COMPLIANCE_MAX_SCAN_FILE_BYTES || 1024 * 1024);
@@ -59,11 +60,26 @@ function walkEntries(rootDir, limits) {
   const entries = [];
   const stack = [rootDir];
 
+  let ignoreGlobs = ['.git', 'node_modules'];
+  try {
+    const ignorePath = path.join(rootDir, '.wpignore');
+    if (fs.existsSync(ignorePath)) {
+      const content = fs.readFileSync(ignorePath, 'utf8');
+      const lines = content.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+      ignoreGlobs = ignoreGlobs.concat(lines);
+    }
+  } catch (err) {
+    // ignore errors reading .wpignore
+  }
+
   while (stack.length > 0) {
     const current = stack.pop();
     const children = fs.readdirSync(current, { withFileTypes: true });
 
     for (const child of children) {
+      if (basenameMatches(ignoreGlobs, child.name)) {
+        continue;
+      }
       const fullPath = path.join(current, child.name);
       if (entries.length >= limits.maxScanEntries) {
         throw new Error(`Scan aborted because the directory exceeds ${limits.maxScanEntries} entries.`);
@@ -107,7 +123,7 @@ function createMatcher(pattern, mode) {
   return (line) => line.includes(pattern);
 }
 
-function findPatternEvidence(files, patterns, patternMode, limits) {
+function findPatternEvidence(files, patterns, patternMode, limits, ignoreComments = false) {
   const matchers = patterns.map((pattern) => createMatcher(pattern, patternMode));
   const evidence = [];
 
@@ -116,6 +132,9 @@ function findPatternEvidence(files, patterns, patternMode, limits) {
     const lines = splitLines(contents);
 
     lines.forEach((line, index) => {
+      if (ignoreComments && /^\s*(?:\/\/|\*|#)/.test(line)) {
+        return;
+      }
       if (matchers.some((matcher) => matcher(line))) {
         evidence.push(`${filePath}:${index + 1}:${line}`);
       }
@@ -218,6 +237,7 @@ function runRule(rule, context) {
   const fileGlobs = detection.file_globs || [];
   const patterns = detection.patterns || [];
   const patternMode = detection.pattern_mode || 'fixed';
+  const ignoreComments = !!detection.ignore_comments;
 
   if (SKIPPED_COVERAGE.has(rule.coverage)) {
     return { skipped: true, evidenceLines: [] };
@@ -231,7 +251,7 @@ function runRule(rule, context) {
       }
 
       const files = collectFilesByGlobs(entries, fileGlobs);
-      const evidenceLines = files.length > 0 ? findPatternEvidence(files, patterns, patternMode, limits) : [];
+      const evidenceLines = files.length > 0 ? findPatternEvidence(files, patterns, patternMode, limits, ignoreComments) : [];
       return { skipped: false, evidenceLines };
     }
 
@@ -259,6 +279,23 @@ function runRule(rule, context) {
       }
     }
 
+    case 'paired-files': {
+      const minFiles = collectFilesByGlobs(entries, detection.file_globs || []);
+      const evidence = [];
+
+      for (const minFile of minFiles) {
+        const sourceFileJs = minFile.replace(/\.min\.js$/, '.js');
+        const sourceFileCss = minFile.replace(/\.min\.css$/, '.css');
+        if (minFile.endsWith('.min.js') && !fs.existsSync(sourceFileJs)) {
+          evidence.push(minFile + ' (missing matching .js source)');
+        }
+        if (minFile.endsWith('.min.css') && !fs.existsSync(sourceFileCss)) {
+          evidence.push(minFile + ' (missing matching .css source)');
+        }
+      }
+      return { skipped: false, evidenceLines: evidence };
+    }
+
     default:
       return { skipped: true, evidenceLines: [] };
   }
@@ -277,6 +314,22 @@ function buildFinding(rule, evidenceLines) {
     evidence_lines: evidenceLines,
     locations: [],
   };
+}
+
+function runAutoFixHandlers(findings, rules, limits) {
+  let fixedCount = 0;
+  for (const finding of findings) {
+    const rule = rules.find(r => r.id === finding.rule_id);
+    if (!rule || !rule.guidance || !rule.guidance.auto_fix || !rule.guidance.auto_fix.available) {
+      continue;
+    }
+
+    const handlerName = rule.guidance.auto_fix.handler;
+    if (handlerName) {
+      fixedCount += runFixer(handlerName, finding, rule, limits, safeReadText);
+    }
+  }
+  return fixedCount;
 }
 
 function pickExtractedScanRoot(extractRoot) {
@@ -493,6 +546,7 @@ function scanPlugin(repoRoot, targetPath, options = {}) {
   const pluginCheckJsonPaths = options.pluginCheckJsonPaths || [];
   const pluginCheckReportPaths = options.pluginCheckReportPaths || [];
   const pluginCheckAuto = options.pluginCheckAuto || false;
+  const runWpCli = options.runWpCli || false;
   const allowedRoots = resolveAllowedRoots(options.allowedRoots || []);
   const limits = {
     maxScanFileBytes: DEFAULT_SCAN_FILE_BYTES,
@@ -506,6 +560,7 @@ function scanPlugin(repoRoot, targetPath, options = {}) {
     ...(options.limits || {}),
   };
   const target = prepareScanTarget(targetPath, { allowedRoots, limits });
+  let autoWpCliPath = null;
 
   try {
     const rules = loadIndexedRules(repoRoot);
@@ -535,9 +590,43 @@ function scanPlugin(repoRoot, targetPath, options = {}) {
       }
     }
 
+    if (options.autoFix && projectFindings.length > 0) {
+      const fixCount = runAutoFixHandlers(projectFindings, rules, limits);
+      if (fixCount > 0) {
+        summary.info += 1; // Log that files were modified
+        projectFindings.push({
+          severity: 'info',
+          source: 'project',
+          origin: 'project-rule',
+          rule_id: 'auto_fix',
+          title: 'Files modified automatically',
+          summary: `The engine auto-patched ${fixCount} files based on fast-fix guidance.`,
+          fix: '',
+          evidence: `Modified ${fixCount} matching paths.`,
+          evidence_lines: [],
+          locations: [],
+        });
+      }
+    }
+
+    if (runWpCli) {
+      const wpResult = spawnSync('wp', ['plugin', 'check', target.inputPath, '--format=json'], {
+        encoding: 'utf8',
+        maxBuffer: limits.maxCommandBufferBytes,
+      });
+
+      if (wpResult.error && wpResult.error.code === 'ENOENT') {
+        throw new Error('WP-CLI is not installed or not in PATH, but --run-wp-cli was requested.');
+      }
+
+      autoWpCliPath = path.join(os.tmpdir(), `wp-plugin-compliance-wpcli-${Date.now()}.json`);
+      fs.writeFileSync(autoWpCliPath, wpResult.stdout || '');
+    }
+
     const candidateImportPaths = [
       ...pluginCheckReportPaths,
       ...pluginCheckJsonPaths,
+      ...(autoWpCliPath ? [autoWpCliPath] : []),
       ...(pluginCheckAuto
         ? discoverPluginCheckReports([
             path.dirname(target.inputPath),
@@ -589,6 +678,13 @@ function scanPlugin(repoRoot, targetPath, options = {}) {
       report,
     };
   } finally {
+    if (autoWpCliPath && fs.existsSync(autoWpCliPath)) {
+      try {
+        fs.unlinkSync(autoWpCliPath);
+      } catch (err) {
+        // Ignore cleanup errors
+      }
+    }
     target.cleanup();
   }
 }

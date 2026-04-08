@@ -1,0 +1,48 @@
+{
+  "name": "wp-plugin-compliance-checker",
+  "version": "0.1.0",
+  "description": "WordPress.org plugin compliance scanner with CLI, MCP server, and GitHub Action",
+  "main": "src/engine.js",
+  "bin": {
+    "wp-plugin-compliance": "./bin/wp-plugin-compliance"
+  },
+  "scripts": {
+    "test": "node tests/test-core-engine.js && node tests/rules/run-all.js && bash tests/test-rules-runner.sh && bash tests/test-compat-wrapper.sh && bash tests/test-reporting.sh && bash tests/test-mcp-smoke.sh",
+    "test:engine": "node tests/test-core-engine.js",
+    "test:rules": "node tests/rules/run-all.js",
+    "test:mcp": "node tests/test-mcp-tools.js",
+    "scan": "node src/cli.js scan",
+    "report": "node src/cli.js report"
+  },
+  "keywords": [
+    "wordpress",
+    "plugin",
+    "compliance",
+    "mcp",
+    "wp-cli",
+    "static-analysis",
+    "wordpress-org"
+  ],
+  "author": "Sant Limited",
+  "license": "GPL-2.0",
+  "homepage": "https://github.com/jeewandaniel/wp-plugin-compliance-checker#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jeewandaniel/wp-plugin-compliance-checker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jeewandaniel/wp-plugin-compliance-checker/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "mcp/",
+    "rules/",
+    "schemas/",
+    "scripts/generate-pr-comment.js"
+  ],
+  "optionalDependencies": {}
+}

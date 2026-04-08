@@ -97,6 +97,7 @@
             "glob",
             "metadata",
             "composite",
+            "paired-files",
             "external-tool",
             "manual"
           ]
@@ -119,6 +120,9 @@
             "fixed",
             "extended-regex"
           ]
+        },
+        "ignore_comments": {
+          "type": "boolean"
         },
         "metadata_check": {
           "type": "string"
@@ -157,6 +161,13 @@
           "type": "array",
           "items": {
             "type": "string"
+          }
+        },
+        "auto_fix": {
+          "type": "object",
+          "properties": {
+            "available": { "type": "boolean" },
+            "handler": { "type": "string" }
           }
         }
       }

@@ -52,6 +52,38 @@
     {
       "id": "plugin_repo.direct_file_access",
       "path": "security/direct-file-access.json"
+    },
+    {
+      "id": "plugin_repo.require_wp_load",
+      "path": "plugin-repo/require-wp-load.json"
+    },
+    {
+      "id": "plugin_repo.admin_menu_capability",
+      "path": "security/admin-menu-capability.json"
+    },
+    {
+      "id": "plugin_repo.wordpress_casing",
+      "path": "readme/wordpress-casing.json"
+    },
+    {
+      "id": "plugin_repo.core_package_duplication",
+      "path": "plugin-repo/core-package-duplication.json"
+    },
+    {
+      "id": "plugin_repo.missing_source_code",
+      "path": "plugin-repo/missing-source-code.json"
+    },
+    {
+      "id": "security.nonce_verification",
+      "path": "security/nonce-verification.json"
+    },
+    {
+      "id": "security.sql_preparation",
+      "path": "security/sql-preparation.json"
+    },
+    {
+      "id": "security.capability_checks",
+      "path": "security/capability-checks.json"
     }
   ]
 }

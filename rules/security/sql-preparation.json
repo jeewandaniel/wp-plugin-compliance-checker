@@ -1,0 +1,36 @@
+{
+  "id": "security.sql_preparation",
+  "title": "Direct database queries without $wpdb->prepare()",
+  "summary": "Direct SQL queries should use $wpdb->prepare() to prevent SQL injection attacks.",
+  "category": "security",
+  "severity": "error",
+  "origin": "official-handbook",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://developer.wordpress.org/apis/security/database-queries/",
+    "https://developer.wordpress.org/reference/classes/wpdb/prepare/"
+  ],
+  "last_verified": "2026-04-08",
+  "detection": {
+    "strategy": "regex",
+    "pattern_mode": "extended-regex",
+    "ignore_comments": true,
+    "file_globs": ["*.php"],
+    "patterns": [
+      "\\$wpdb->query\\s*\\([^)]*\\$",
+      "\\$wpdb->get_results\\s*\\([^)]*\\$",
+      "\\$wpdb->get_row\\s*\\([^)]*\\$",
+      "\\$wpdb->get_var\\s*\\([^)]*\\$"
+    ],
+    "notes": "Detects $wpdb methods with variable interpolation. May flag prepared statements incorrectly."
+  },
+  "guidance": {
+    "why_it_matters": "SQL injection is one of the most dangerous vulnerabilities. Attackers can read, modify, or delete your entire database if queries include unescaped user input.",
+    "fix": "Always use $wpdb->prepare() when including variables in SQL queries.",
+    "false_positive_risk": "Medium. May flag queries that already use prepare() if the pattern matching isn't perfect.",
+    "examples": [
+      "Unsafe: $wpdb->query(\"DELETE FROM $table WHERE id = $id\");",
+      "Safe: $wpdb->query($wpdb->prepare(\"DELETE FROM %s WHERE id = %d\", $table, $id));"
+    ]
+  }
+}

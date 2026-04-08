@@ -5,21 +5,39 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { scanPlugin } = require('./engine');
 const { renderHumanReport, renderMarkdownReport } = require('./report');
+const EXIT = require('./exit-codes');
 
 const repoRoot = path.resolve(__dirname, '..');
 
+function getVersion() {
+  try {
+    const pkg = require('../package.json');
+    return pkg.version;
+  } catch (_error) {
+    return '0.0.0';
+  }
+}
+
 function printUsage() {
   process.stdout.write(`Usage:
-  wp-plugin-compliance scan [--format human|json] [--plugin-check-report report.{json,txt}] [--plugin-check-auto] [--plugin-check-json report.json] /path/to/plugin-or-zip
+  wp-plugin-compliance scan [--format human|json] [--plugin-check-report report.{json,txt}] [--plugin-check-auto] [--plugin-check-json report.json] [--run-wp-cli] [--fix] /path/to/plugin-or-zip
   wp-plugin-compliance report [report.json]
   wp-plugin-compliance test
+  wp-plugin-compliance version
   wp-plugin-compliance help
 
 Commands:
   scan     Run the shared compliance scan.
   report   Render a markdown report from JSON scan output.
   test     Run the local regression suites.
+  version  Show version number.
   help     Show this message.
+
+Exit Codes:
+  0  Clean scan (no errors)
+  1  Findings exist (errors found)
+  2  Scan error (invalid path, ZIP error)
+  3  Configuration error
 `);
 }
 
@@ -29,6 +47,8 @@ function parseScanArgs(argv) {
   const pluginCheckJsonPaths = [];
   const pluginCheckReportPaths = [];
   let pluginCheckAuto = false;
+  let runWpCli = false;
+  let autoFix = false;
 
   for (let index = 0; index < argv.length; index += 1) {
     const value = argv[index];
@@ -80,6 +100,16 @@ function parseScanArgs(argv) {
       continue;
     }
 
+    if (value === '--run-wp-cli') {
+      runWpCli = true;
+      continue;
+    }
+
+    if (value === '--fix') {
+      autoFix = true;
+      continue;
+    }
+
     if (value === '-h' || value === '--help') {
       printUsage();
       process.exit(0);
@@ -102,6 +132,8 @@ function parseScanArgs(argv) {
     pluginCheckJsonPaths,
     pluginCheckReportPaths,
     pluginCheckAuto,
+    runWpCli,
+    autoFix,
   };
 }
 
@@ -137,12 +169,14 @@ function main() {
 
   switch (command) {
     case 'scan': {
-      const { format, targetPath, pluginCheckJsonPaths, pluginCheckReportPaths, pluginCheckAuto } = parseScanArgs(process.argv.slice(3));
+      const { format, targetPath, pluginCheckJsonPaths, pluginCheckReportPaths, pluginCheckAuto, runWpCli, autoFix } = parseScanArgs(process.argv.slice(3));
       const scan = scanPlugin(repoRoot, targetPath, {
         runnerLabel,
         pluginCheckJsonPaths,
         pluginCheckReportPaths,
         pluginCheckAuto,
+        runWpCli,
+        autoFix,
       });
       const output = format === 'json'
         ? JSON.stringify(scan.report, null, 2)
@@ -152,7 +186,7 @@ function main() {
       if (!output.endsWith('\n')) {
         process.stdout.write('\n');
       }
-      process.exit(scan.exitCode);
+      process.exit(scan.exitCode > 0 ? EXIT.FINDINGS_EXIST : EXIT.SUCCESS);
       break;
     }
 
@@ -171,6 +205,12 @@ function main() {
       runTestScript('tests/test-mcp-smoke.sh');
       break;
 
+    case 'version':
+    case '-v':
+    case '--version':
+      process.stdout.write(`wp-plugin-compliance-checker ${getVersion()}\n`);
+      break;
+
     case 'help':
     case '-h':
     case '--help':
@@ -180,7 +220,7 @@ function main() {
     default:
       process.stderr.write(`Unknown command: ${command}\n`);
       printUsage();
-      process.exit(1);
+      process.exit(EXIT.CONFIG_ERROR);
   }
 }
 
@@ -188,5 +228,12 @@ try {
   main();
 } catch (error) {
   process.stderr.write(`${error.message}\n`);
-  process.exit(1);
+  // Determine appropriate exit code based on error type
+  if (error.message.includes('not found') || error.message.includes('does not exist')) {
+    process.exit(EXIT.SCAN_ERROR);
+  }
+  if (error.message.includes('allowed roots') || error.message.includes('Unsupported')) {
+    process.exit(EXIT.CONFIG_ERROR);
+  }
+  process.exit(EXIT.SCAN_ERROR);
 }

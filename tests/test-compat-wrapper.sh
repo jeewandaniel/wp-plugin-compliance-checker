@@ -104,10 +104,11 @@ run_wrapper_case \
     1 \
     "plugin_repo.no_inline_style_tags"
 
+# Exit code 1 = findings exist (standardized exit codes)
 run_wrapper_json_case \
     "release-artifacts" \
     "$FIXTURES_DIR/fail/release-artifacts" \
-    2 \
+    1 \
     '.summary.errors == 2 and (.findings | map(.rule_id) | index("plugin_repo.forbidden_ai_artifacts")) != null'
 
 if [ "$FAILURES" -gt 0 ]; then

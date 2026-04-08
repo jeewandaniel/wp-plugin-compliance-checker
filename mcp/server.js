@@ -9,10 +9,22 @@ const {
   sanitizeControlChars,
 } = require('../src/security');
 
-const SERVER_INFO = {
-  name: 'wp-plugin-compliance-checker',
-  version: '0.1.0',
-};
+function getServerInfo() {
+  try {
+    const pkg = require('../package.json');
+    return {
+      name: pkg.name,
+      version: pkg.version,
+    };
+  } catch (_error) {
+    return {
+      name: 'wp-plugin-compliance-checker',
+      version: '0.0.0',
+    };
+  }
+}
+
+const SERVER_INFO = getServerInfo();
 
 const repoRoot = path.resolve(__dirname, '..');
 let inputBuffer = Buffer.alloc(0);

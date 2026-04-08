@@ -1,0 +1,30 @@
+{
+  "id": "plugin_repo.require_wp_load",
+  "title": "Directly loading WordPress core files",
+  "summary": "Including wp-load.php or wp-config.php directly is forbidden. It typically indicates an insecure script meant to be accessed directly bypassing the WordPress loader.",
+  "category": "plugin-repo",
+  "severity": "error",
+  "origin": "project-heuristic",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "regex",
+    "pattern_mode": "fixed",
+    "ignore_comments": true,
+    "file_globs": [
+      "*.php"
+    ],
+    "patterns": [
+      "wp-load.php",
+      "wp-config.php"
+    ]
+  },
+  "guidance": {
+    "why_it_matters": "Directly loading wp-load.php bypasses WordPress security and routing, leading to likely exploit paths.",
+    "fix": "Always use WordPress API hooks (e.g. admin-post.php or admin-ajax.php) to handle requests, never access a PHP file directly via URL.",
+    "false_positive_risk": "Medium. Mentioning 'wp-load.php' in strings or docs might false-flag."
+  }
+}

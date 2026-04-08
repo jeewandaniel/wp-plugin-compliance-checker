@@ -113,7 +113,8 @@ run_auto_reporting_case() {
         status=$?
     fi
 
-    assert_exit_code "$status" 3 "$name cli scan"
+    # Exit code 1 = findings exist (standardized exit codes)
+    assert_exit_code "$status" 1 "$name cli scan"
     assert_json_expr "$json_file" '.summary.errors == 3 and .summary.warnings == 1 and .sources.plugin_check.findings == 2' "$name cli scan"
 
     bash "$CLI" report "$json_file" >"$markdown_file"
@@ -132,25 +133,28 @@ run_reporting_case \
     '.summary.errors == 0 and (.findings | length) == 0' \
     "Ready for deeper review."
 
+# Exit code 1 = findings exist (standardized exit codes)
 run_reporting_case \
     "release-artifacts" \
     "$FIXTURES_DIR/fail/release-artifacts" \
-    2 \
+    1 \
     '.summary.errors == 2 and (.findings | map(.rule_id) | index("plugin_repo.forbidden_release_files")) != null' \
     "plugin_repo.forbidden_release_files"
 
+# Exit code 1 = findings exist (standardized exit codes)
 run_reporting_case \
     "merged-plugin-check" \
     "$FIXTURES_DIR/fail/release-artifacts" \
-    3 \
+    1 \
     '.summary.errors == 3 and .summary.warnings == 1 and .sources.plugin_check.findings == 2 and (.findings | map(.source) | index("plugin_check")) != null' \
     "Source: plugin_check" \
     --plugin-check-json "$PLUGIN_CHECK_FIXTURE"
 
+# Exit code 1 = findings exist (standardized exit codes)
 run_reporting_case \
     "merged-plugin-check-stream" \
     "$FIXTURES_DIR/fail/release-artifacts" \
-    3 \
+    1 \
     '.summary.errors == 3 and .summary.warnings == 1 and .imports[0].format == "cli-json-stream"' \
     "plugin_header_fields" \
     --plugin-check-report "$PLUGIN_CHECK_STREAM_FIXTURE"

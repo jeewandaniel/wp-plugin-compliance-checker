@@ -1,0 +1,123 @@
+name: 'WP Plugin Compliance Checker'
+description: 'Runs heuristic and official guidance checks against a WordPress.org plugin before you submit.'
+author: 'Sant Limited'
+branding:
+  icon: 'check-circle'
+  color: 'blue'
+
+inputs:
+  plugin_dir:
+    description: 'Path to the plugin directory or ZIP file to scan'
+    required: true
+    default: '.'
+  run_wp_cli:
+    description: 'If true, automatically execute WP-CLI plugin check and merge the results'
+    required: false
+    default: 'false'
+  fail_on_error:
+    description: 'If true, fail the action when errors are found'
+    required: false
+    default: 'true'
+
+outputs:
+  exit_code:
+    description: 'Exit code from the scan (0=clean, 1=findings, 2=error)'
+    value: ${{ steps.scan.outputs.exit_code }}
+  errors:
+    description: 'Total number of errors found'
+    value: ${{ steps.scan.outputs.errors }}
+  warnings:
+    description: 'Total number of warnings found'
+    value: ${{ steps.scan.outputs.warnings }}
+  report_path:
+    description: 'Path to the JSON report file'
+    value: ${{ steps.scan.outputs.report_path }}
+  pr_comment:
+    description: 'Markdown content suitable for a PR comment'
+    value: ${{ steps.scan.outputs.pr_comment }}
+  verdict:
+    description: 'Overall verdict: ready_for_deeper_review or needs_attention'
+    value: ${{ steps.scan.outputs.verdict }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Run wp-plugin-compliance scan
+      id: scan
+      shell: bash
+      run: |
+        REPORT_PATH="${{ runner.temp }}/wp-compliance-report.json"
+
+        # Build command
+        CMD=("${{ github.action_path }}/bin/wp-plugin-compliance" "scan" "--format=json")
+
+        if [ "${{ inputs.run_wp_cli }}" == "true" ]; then
+          CMD+=("--run-wp-cli")
+        fi
+
+        CMD+=("${{ inputs.plugin_dir }}")
+
+        echo "Running WP Plugin Compliance Checker"
+        echo "Command: ${CMD[*]}"
+
+        # Run scan and capture output (don't fail yet)
+        set +e
+        "${CMD[@]}" > "$REPORT_PATH" 2>&1
+        SCAN_EXIT=$?
+        set -e
+
+        # Parse results from JSON
+        if [ -f "$REPORT_PATH" ] && jq -e . "$REPORT_PATH" > /dev/null 2>&1; then
+          ERRORS=$(jq -r '.summary.errors // 0' "$REPORT_PATH")
+          WARNINGS=$(jq -r '.summary.warnings // 0' "$REPORT_PATH")
+          VERDICT=$(jq -r '.verdict // "unknown"' "$REPORT_PATH")
+        else
+          echo "Warning: Could not parse report JSON"
+          ERRORS=$SCAN_EXIT
+          WARNINGS=0
+          VERDICT="scan_failed"
+        fi
+
+        # Set outputs
+        echo "exit_code=$SCAN_EXIT" >> $GITHUB_OUTPUT
+        echo "errors=$ERRORS" >> $GITHUB_OUTPUT
+        echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
+        echo "report_path=$REPORT_PATH" >> $GITHUB_OUTPUT
+        echo "verdict=$VERDICT" >> $GITHUB_OUTPUT
+
+        # Generate PR comment markdown
+        if [ -f "$REPORT_PATH" ] && jq -e . "$REPORT_PATH" > /dev/null 2>&1; then
+          PR_COMMENT=$(node "${{ github.action_path }}/scripts/generate-pr-comment.js" "$REPORT_PATH" 2>/dev/null || echo "## WordPress Plugin Compliance Scan\n\nScan completed with $ERRORS errors and $WARNINGS warnings.")
+        else
+          PR_COMMENT="## WordPress Plugin Compliance Scan\n\n:x: Scan failed to complete. Check the logs for details."
+        fi
+
+        # Use heredoc for multiline output
+        {
+          echo "pr_comment<<ENDOFCOMMENT"
+          echo "$PR_COMMENT"
+          echo "ENDOFCOMMENT"
+        } >> $GITHUB_OUTPUT
+
+        # Print summary to console
+        echo ""
+        echo "============================================"
+        echo "WP Plugin Compliance Scan Results"
+        echo "============================================"
+        echo "Errors:   $ERRORS"
+        echo "Warnings: $WARNINGS"
+        echo "Verdict:  $VERDICT"
+        echo "Report:   $REPORT_PATH"
+        echo "============================================"
+
+        # Fail if requested and errors found
+        if [ "${{ inputs.fail_on_error }}" == "true" ] && [ "$ERRORS" -gt 0 ]; then
+          echo ""
+          echo "::error::Plugin compliance check failed with $ERRORS error(s)"
+          exit 1
+        fi

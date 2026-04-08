@@ -1,0 +1,31 @@
+{
+  "id": "plugin_repo.admin_menu_capability",
+  "title": "Using roles instead of capabilities for menus",
+  "summary": "WordPress menus should use capabilities (e.g., manage_options) rather than roles (e.g., administrator).",
+  "category": "security",
+  "severity": "error",
+  "origin": "project-heuristic",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "regex",
+    "pattern_mode": "extended-regex",
+    "ignore_comments": true,
+    "file_globs": ["*.php"],
+    "patterns": [
+      "add_menu_page\\(.*['\"](administrator|editor|author|contributor|subscriber)['\"]",
+      "add_options_page\\(.*['\"](administrator|editor|author|contributor|subscriber)['\"]",
+      "add_submenu_page\\(.*['\"](administrator|editor|author|contributor|subscriber)['\"]"
+    ]
+  },
+  "guidance": {
+    "why_it_matters": "Roles can be modified, removed, or have their capabilities changed. Hardcoding roles can lead to broken permission structures.",
+    "fix": "Change the role string to a specific capability like 'manage_options'.",
+    "examples": [
+      "Use add_menu_page('My Plugin', 'My Plugin', 'manage_options', ...)"
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "id": "plugin_repo.wordpress_casing",
+  "title": "Incorrect casing of WordPress or WooCommerce",
+  "summary": "WordPress.org review strictly enforces correct capitalization of trademarks.",
+  "category": "readme",
+  "severity": "warning",
+  "origin": "project-heuristic",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/"
+  ],
+  "last_verified": "2026-04-07",
+  "detection": {
+    "strategy": "regex",
+    "pattern_mode": "extended-regex",
+    "ignore_comments": false,
+    "file_globs": ["readme.txt"],
+    "patterns": [
+      "\\bWordpress\\b",
+      "\\bwordPress\\b",
+      "\\bWoocommerce\\b",
+      "\\bwooCommerce\\b"
+    ]
+  },
+  "guidance": {
+    "why_it_matters": "Improper casing of 'WordPress' (capital W, P) or WooCommerce is treated as a trademark violation or lack of attention to detail and can cause immediate rejection.",
+    "fix": "Search and replace 'Wordpress' with 'WordPress'.",
+    "false_positive_risk": "Low.",
+    "auto_fix": {
+      "available": true,
+      "handler": "casing"
+    }
+  }
+}

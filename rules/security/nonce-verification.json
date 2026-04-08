@@ -1,0 +1,34 @@
+{
+  "id": "security.nonce_verification",
+  "title": "Missing nonce verification in form handlers",
+  "summary": "Form handlers and AJAX endpoints should verify nonces to prevent CSRF attacks.",
+  "category": "security",
+  "severity": "error",
+  "origin": "official-handbook",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://developer.wordpress.org/apis/security/nonces/",
+    "https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/"
+  ],
+  "last_verified": "2026-04-08",
+  "detection": {
+    "strategy": "regex",
+    "pattern_mode": "extended-regex",
+    "ignore_comments": true,
+    "file_globs": ["*.php"],
+    "patterns": [
+      "\\$_POST\\[.*\\](?!.*wp_verify_nonce|check_admin_referer|check_ajax_referer)",
+      "\\$_REQUEST\\[.*\\](?!.*wp_verify_nonce|check_admin_referer|check_ajax_referer)"
+    ],
+    "notes": "Heuristic check - may have false positives. Look for $_POST/$_REQUEST usage without nearby nonce checks."
+  },
+  "guidance": {
+    "why_it_matters": "Without nonce verification, forms are vulnerable to Cross-Site Request Forgery (CSRF) attacks. Attackers can trick authenticated users into performing unintended actions.",
+    "fix": "Add wp_nonce_field() to your forms and verify with wp_verify_nonce() or check_admin_referer() before processing.",
+    "false_positive_risk": "Medium. The heuristic may flag legitimate read-only uses of $_POST. Review each occurrence.",
+    "examples": [
+      "Add to form: wp_nonce_field('my_action', 'my_nonce');",
+      "Verify in handler: if (!wp_verify_nonce($_POST['my_nonce'], 'my_action')) wp_die('Invalid nonce');"
+    ]
+  }
+}

@@ -2,7 +2,21 @@
 
 WordPress.org submission guidance, preflight checks, merged Plugin Check reporting, and MCP tooling for plugin developers and AI coding assistants.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: GPL v2](https://img.shields.io/badge/License-GPL%20v2-blue.svg)](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
+
+## Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/jeewandaniel/wp-plugin-compliance-checker.git
+cd wp-plugin-compliance-checker
+
+# Or install globally via npm (coming soon)
+# npm install -g wp-plugin-compliance-checker
+```
+
+No dependencies required — runs on Node.js 18+ out of the box.
 
 ## What This Is
 
@@ -19,14 +33,14 @@ It is designed to complement the official WordPress Plugin Check ecosystem, not 
 
 This repository is already usable as a real toolchain.
 
-- Scan a plugin directory before submission.
-- Scan a release ZIP instead of only the source repo.
-- Generate human-readable or JSON results.
-- Merge your own findings with saved official Plugin Check output.
-- Import raw `wp plugin check --format=json` CLI result files such as `plugin-check-results.txt`.
-- Auto-discover common `plugin-check-results.*` artifacts in action-style workflows.
+- Scan a plugin directory or release ZIP before submission.
+- Filter out vendor false-positives natively using a `.wpignore` file.
+- Generate human-readable reports, JSON artifacts, or GitHub PR automated comments.
+- **Auto-execute** and seamlessly merge the official `wp plugin check` natively via `--run-wp-cli`.
+- Import raw `wp plugin check --format=json` result files when running in disconnected CI environments.
+- Automatically **auto-fix** trivially failing compliance rules directly using the `--fix` flag.
 - Expose the same behavior through a real MCP server.
-- Render a markdown compliance report for a teammate, client, or PR workflow.
+- Run entirely as a native GitHub Action to block failing PRs.
 
 ## Trust, Scope, and Sources
 
@@ -103,9 +117,15 @@ You want to check the ZIP you actually plan to upload, not just your working dir
 
 This is especially useful for catching release junk such as development files, packaged archives, AI instruction files, and other review-unfriendly artifacts.
 
-### Merge official Plugin Check output
+### Run or Merge Official Plugin Check Output
 
-You already ran Plugin Check elsewhere and want one combined report.
+You can configure the tool to automatically execute the official CLI tool (if installed on your machine) and natively merge the findings without you lifting a finger:
+
+```bash
+./bin/wp-plugin-compliance scan --run-wp-cli /path/to/plugin
+```
+
+If you ran Plugin Check elsewhere and want to manually combine reports in CI, you can import them:
 
 ```bash
 ./bin/wp-plugin-compliance scan --format=json \
@@ -113,12 +133,14 @@ You already ran Plugin Check elsewhere and want one combined report.
   /path/to/plugin
 ```
 
-or
+### Auto-Fixing and Ignoring False Positives
+
+Tired of the scanner flagging libraries like `vendor` or `node_modules`? Drop a `.wpignore` file in the root of your plugin directory containing those folder names to completely exclude them from the scan.
+
+If you made simple mistakes (like capitalizing 'Wordpress' incorrectly in your `readme.txt`), you can ask the CLI to automatically patch the files for you:
 
 ```bash
-./bin/wp-plugin-compliance scan --format=json \
-  --plugin-check-json plugin-check-report.json \
-  /path/to/plugin
+./bin/wp-plugin-compliance scan --fix /path/to/plugin
 ```
 
 ### MCP workflow
@@ -228,26 +250,121 @@ The repository now has a real shared core under [src/README.md](src/README.md) t
 ./bin/wp-plugin-compliance test
 ```
 
-## MCP
+### Check version
 
-This repository now includes a functioning MCP stdio server in [mcp/server.js](mcp/server.js).
+```bash
+./bin/wp-plugin-compliance version
+```
 
-Tools exposed today:
+## Exit Codes
 
-- `scan_plugin`
-- `render_report`
-- `list_rules`
-- `get_rule`
+The CLI uses standardized exit codes for CI integration:
 
-That means this is no longer just "MCP-ready." It is an actual working MCP server on top of the shared compliance engine.
+| Code | Meaning |
+|------|---------|
+| 0 | Clean scan — no errors found |
+| 1 | Findings exist — at least one error detected |
+| 2 | Scan error — invalid path, ZIP extraction failure, or similar |
+| 3 | Configuration error — invalid arguments or options |
 
-See [docs/mcp.md](docs/mcp.md) for the current MCP contract.
+Example CI usage:
 
-Security note:
+```bash
+./bin/wp-plugin-compliance scan ./my-plugin
+if [ $? -eq 0 ]; then
+  echo "Plugin is ready for submission"
+elif [ $? -eq 1 ]; then
+  echo "Plugin has compliance issues"
+else
+  echo "Scan failed"
+fi
+```
 
-- MCP is not "risk-free just because it is a layer"
-- this server is intentionally thin and does not expose arbitrary shell execution
-- it now defaults to workspace-scoped path access instead of unrestricted local reads
+## GitHub Actions Integration
+
+This repository can be cleanly incorporated into your CI/CD pipelines as a Composite Action. It natively wires up the CLI execution logic for you.
+
+```yaml
+- name: Run Plugin Compliance Scanner
+  id: compliance
+  uses: jeewandaniel/wp-plugin-compliance-checker@main
+  with:
+    plugin_dir: '.'
+    run_wp_cli: 'false'
+    fail_on_error: 'true'
+
+- name: Post PR Comment
+  if: github.event_name == 'pull_request'
+  uses: actions/github-script@v7
+  with:
+    script: |
+      github.rest.issues.createComment({
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        body: `${{ steps.compliance.outputs.pr_comment }}`
+      })
+```
+
+### Action Outputs
+
+The action provides these outputs for downstream steps:
+
+| Output | Description |
+|--------|-------------|
+| `exit_code` | Exit code (0=clean, 1=findings, 2=error) |
+| `errors` | Total number of errors found |
+| `warnings` | Total number of warnings found |
+| `report_path` | Path to the JSON report file |
+| `pr_comment` | Markdown content ready for PR comments |
+| `verdict` | `ready_for_deeper_review` or `needs_attention` |
+
+## MCP Server
+
+This repository includes a functioning MCP stdio server for AI coding assistants like Claude Code, Cursor, or Codex.
+
+### Claude Code Setup
+
+Add to your `~/.claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "wp-plugin-compliance": {
+      "command": "node",
+      "args": ["/path/to/wp-plugin-compliance-checker/mcp/server.js"],
+      "env": {
+        "WP_PLUGIN_COMPLIANCE_ALLOWED_ROOTS": "/path/to/your/plugins"
+      }
+    }
+  }
+}
+```
+
+### Available Tools
+
+| Tool | Description |
+|------|-------------|
+| `scan_plugin` | Scan a plugin directory or ZIP, return structured findings |
+| `render_report` | Generate a markdown compliance report |
+| `list_rules` | List all rules with optional filtering by category/severity |
+| `get_rule` | Get full details for a specific rule by ID |
+
+### Example Prompts
+
+Once configured, ask your AI assistant:
+
+- *"Scan my plugin at /path/to/plugin and explain what would block WordPress.org approval"*
+- *"List all security rules and explain what they check for"*
+- *"Generate a compliance report for my-plugin.zip"*
+
+### Security
+
+- Paths are restricted to configured `WP_PLUGIN_COMPLIANCE_ALLOWED_ROOTS` by default
+- ZIP extraction is bounded by size, entry count, and timeout limits
+- No arbitrary shell execution — the server is intentionally thin
+
+See [docs/mcp.md](docs/mcp.md) for the full MCP contract.
 
 ## What The Report Model Gives You
 
@@ -303,10 +420,6 @@ It does not currently:
 - guarantee WordPress.org approval
 - replace human review by the plugins team
 - prove logical security correctness
-- eliminate heuristic false positives
-- directly execute live `wp plugin check` on this machine right now
-
-The last point is environmental: direct execution is the natural next step, but this machine currently does not have `php` or `wp` installed.
 
 ## Repository Map
 
@@ -358,7 +471,7 @@ When adding new guidance or checks, prefer official sources and include links.
 
 ## License
 
-MIT License. See [LICENSE](LICENSE).
+Distributed under the GPLv2 License. See [LICENSE](LICENSE) for more information.
 
 ## Credits
 

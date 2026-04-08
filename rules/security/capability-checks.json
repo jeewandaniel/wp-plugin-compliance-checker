@@ -1,0 +1,35 @@
+{
+  "id": "security.capability_checks",
+  "title": "Missing capability check before privileged action",
+  "summary": "Administrative actions should verify user capabilities with current_user_can() before execution.",
+  "category": "security",
+  "severity": "warning",
+  "origin": "official-handbook",
+  "coverage": "heuristic",
+  "official_sources": [
+    "https://developer.wordpress.org/apis/security/checking-user-capabilities/",
+    "https://developer.wordpress.org/reference/functions/current_user_can/"
+  ],
+  "last_verified": "2026-04-08",
+  "detection": {
+    "strategy": "regex",
+    "pattern_mode": "extended-regex",
+    "ignore_comments": true,
+    "file_globs": ["*.php"],
+    "patterns": [
+      "update_option\\s*\\([^)]+\\)(?!.*current_user_can)",
+      "delete_option\\s*\\([^)]+\\)(?!.*current_user_can)",
+      "wp_delete_post\\s*\\([^)]+\\)(?!.*current_user_can)"
+    ],
+    "notes": "Heuristic detection of privileged operations without capability checks in the same line or nearby context."
+  },
+  "guidance": {
+    "why_it_matters": "Without capability checks, any authenticated user could perform administrative actions, leading to privilege escalation vulnerabilities.",
+    "fix": "Wrap privileged operations with current_user_can() checks.",
+    "false_positive_risk": "High. The heuristic cannot see function scope or earlier checks. Review manually.",
+    "examples": [
+      "if (current_user_can('manage_options')) { update_option('my_setting', $value); }",
+      "if (!current_user_can('delete_posts')) { wp_die('Unauthorized'); }"
+    ]
+  }
+}
